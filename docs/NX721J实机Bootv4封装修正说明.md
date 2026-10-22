@@ -77,6 +77,37 @@ $header = 'C:\Users\SangLuo\Desktop\Projects\UniXNU-Z60U-artifacts\2026-10-22-tw
 
 ## 下一次实机测试
 
+## 2026 年 10 月 23 日 SEC 内存表修正
+
+修正显示保留区后，Stage 1 已经能进入 UEFI SEC，并在屏幕显示 `MMU: 38 regions`。随后旧版内存表报错：
+
+```text
+TZApps_Reserved (0xD8800000) and Display_Reserved (0xE3940000) overlap
+```
+
+原因是旧表仍使用 giulia 的 `TZApps_Reserved` 长度 `0x1B000000`，结束地址为 `0xF3800000`。NX721J 实机 DTB 的只读节点是：
+
+```text
+/reserved-memory/tz_merged_region = 0xD8000000/0x00800000
+/reserved-memory/splash_region    = 0xE3940000/0x02B00000
+```
+
+因此 `Platforms/ZTE/nx721jPkg/Library/MemoryMapLib/MemoryMapLib.c` 已改为：
+
+```text
+TZApps_Reserved  = 0xD8000000/0x00800000
+Display_Reserved = 0xE3940000/0x02B00000
+```
+
+修正后重新构建通过，EDK II 验证 50 个镜像。新的临时镜像为：
+
+```text
+C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-stage1-v4-e394-tzfix.img
+SHA256: e36c3ef18356ffc4485906481e3d725151b05f2f577befe7bdceb5057cb9e6d4
+```
+
+下一步仍只执行 `fastboot boot`，不执行 `fastboot flash`。
+
 这次只允许临时启动，不刷写分区：
 
 ```powershell

@@ -6,6 +6,8 @@ Conf
 bootpayload.bin
 BootShim.bin
 BootShim.elf
+BootShim/BootShimProbe-*.bin
+BootShim/BootShimProbe-*.elf
 
 Mu-*.*
 *:Zone.Identifier
