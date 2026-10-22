@@ -154,6 +154,32 @@ UEFI FD：0x300000 字节
 SHA256：50be0cfa1e7703e410bddec6dfae2bae86fe48c95e0d2b648133161ce087de4d
 ```
 
+## 2026 年 10 月 23 日 RamManagerDxe 与 Ace5 对照修正
+
+重新检查 Ace5 的完整 `giulia.fdf` 后确认，Ace5 并没有移除 `RamManagerDxe`。其完整固件在 `Include/APRIORI.inc`、`Include/DXE.inc` 和 RAW 文件之后明确加入：
+
+```text
+INF SiliciumPkg/Drivers/RamManagerDxe/RamManagerDxe.inf
+```
+
+因此，之前从 NX721J Stage 1 中去除 `RamManagerDxe` 的理由，只适用于“显示-only 的最小验证链”：当前 `NX721J_VENDOR_HW=0`，没有加载完整 Qualcomm 厂商硬件链，也没有建立 Qualcomm RAM Partition Protocol；若保留该驱动，启动日志会出现 `Failed to Locate RAM Partition Protocol`，随后在 `RamManager.c` 的断言处停止。去除它让我们能够验证 SEC、DXE、GOP 和 BDS，但这不是 Ace5 的最终驱动布局。
+
+当前 `nx721j.fdf` 的条件关系是正确的：
+
+```text
+NX721J_VENDOR_HW=0  -> Stage 1，不加载 RamManagerDxe
+NX721J_VENDOR_HW=1  -> 完整厂商链，加载 RamManagerDxe
+```
+
+下一步不能只恢复 `RamManagerDxe` 单个文件。Ace5 的做法是让完整厂商链、XBL HOB、RAM Partition Protocol 和 RamManager 一起工作。对 NX721J 应先确认以下条件：
+
+1. `PcdBuildXblHobs` 是否应在完整链启用；
+2. Z60U ABL 传入的 XBL HOB 是否包含 RAM Partition Protocol 所需的分区信息；
+3. `MemoryMapLib` 的 Z60U 物理保留区是否已经覆盖 DDR、TZ merged、display、DBI 和其它不可用区域；
+4. `EnvDxe`、`SmemDxe`、DAL/HWIO、RPMh/时钟/电源链是否已经匹配 Z60U，而不是仅仅因为 CPU 同为 SM8650 就直接复用 giulia 二进制。
+
+所以结论是：**RamManagerDxe 从最终全链中去除是不对的，但从当前 Stage 1 中暂时去除是必要的诊断措施。** 当前不重新生成镜像，不把它单独加回 UFS 测试链；待完成 Ace5 与 NX721J 的完整厂商协议和 HOB 对照后，再以完整链整体恢复并测试。
+
 实机测试使用：
 
 ```text
@@ -161,3 +187,59 @@ fastboot boot Mu-nx721j-stage1-ufs-test-v4.img
 ```
 
 ABL 返回 `Sending OKAY`、`Booting OKAY`。等待 20 秒后主机没有重新枚举 fastboot 或 ADB；由于该测试镜像仍未加入 USB 调试链，这只能记录为“屏幕结果待确认”，不能单独判定 UFS 已初始化或已卡死。没有执行 `fastboot flash`、擦除、userdata 写入或其他分区修改。
+
+## 2026 年 10 月 23 日 UFS 测试第一处阻塞
+
+用户屏幕照片显示，UFS 测试镜像停在：
+
+```text
+Loading driver at ... EntryPoint=... EnvDxeEnhanced.efi
+```
+
+之后没有继续加载下一个驱动，也没有进入 BDS。`EnvDxeEnhanced` 是 giulia 厂商环境驱动，不属于 UFS 控制器的必要协议本身；它在 Z60U 上可能等待 giulia 专用环境变量、共享内存或硬件服务。下一版 UFS 测试已从 APRIORI 和 DXE 列表同时移除该驱动，其他 UFS 依赖保持不变，用于定位下一处真正阻塞点。
+
+## 2026 年 10 月 23 日 EnvDxe 停止后的纠正
+
+上一节记录的“移除 `EnvDxeEnhanced`”只是为了定位 UFS 裁剪链的下一处阻塞，不能作为最终移植方案。用户随后使用 Z60U 原厂提取的 `EnvDxeEnhanced.efi` 进行测试，仍然在该驱动位置停止，证明单独替换模块或删除模块都没有修复厂商启动上下文。
+
+按照 Ace5 的完整工程重新检查后，正确方向是恢复完整厂商链：启用 `IortDtDxe`、完整 Qualcomm DXE 依赖、XBL HOB 构建和 `RamManagerDxe`，并把 Z60U 原厂的 `EnvDxeEnhanced`、`SmemDxe`、`UFSDxe` 放入对应的完整链位置。为此新增了 `--nx721j-vendor-hw` 构建开关，并修正 `DeviceBuild.py` 将该开关传递为 `NX721J_VENDOR_HW=1`。
+
+本次完整链镜像：
+
+```text
+Mu-nx721j-vendor-stock-v1.img
+SHA256: 6D739544888ED3F9EED7307D7E16FD1F71D049E6B73C28AF048CE145019FEB80
+```
+
+构建报告确认 `PcdBuildXblHobs=1`，并包含 `IortDtDxe` 与 `RamManagerDxe`。该镜像已经通过 `fastboot boot` 临时发送到实机，未执行任何分区刷写或擦除。下一步根据屏幕实际停点判断是继续通过完整厂商链，还是出现了下一个具体的板级协议或资源不匹配。
+
+## 2026 年 10 月 23 日 v2 实机日志：已经越过 EnvDxe
+
+`Mu-nx721j-vendor-stock-v2.img` 的实机照片 `IMG20261023063358.jpg` 显示，完整厂商链已经完成以下阶段：
+
+- MMU 映射、HOB 构建、FV 解压和 DXE Core 启动成功；
+- `IortDtDxe.efi` 加载成功，并报告 `Successfully Enabled Cache Coherency`；
+- 原厂 `EnvDxeEnhanced.efi` 已经越过；
+- `SmemDxe`、`DALSys`、`HWIODxe`、`ChipInfoDxe`、`PlatformInfoDxeDriver`、`HALIOMMU`、`IPCDxe`、`Smp2pDxe`、`SSRDxe`、`CmdDbDxe`、`PwrUtilsDxe`、`NpaDxe` 和 `RpmhDxe` 已开始或完成加载。
+
+照片中出现 `ERROR: CPU Vectors region not present in cfg file`，但后续驱动仍然继续，当前应记录为配置缺项而不是立即判定为致命错误。照片没有包含底部，因此没有看到 v1 的 UFS sense data 和 `UFS.c +2168` 断言，不能把 v2 的最终停点归因于 UFS。
+
+重新对照配置时发现，v2 仍将 `ULogDxe` 指向 `Binaries/giulia`，这是配置遗漏，不是应该删除 ULog。已改为：
+
+```text
+Binaries/nx721j/QcomPkg/Drivers/ULogDxe/ULogDxe.inf
+```
+
+## 2026 年 10 月 23 日 v3 构建结果
+
+修正 ULog 路径后，以下构建成功：
+
+```text
+build_uefi.py -d nx721j -r DEBUG --nx721j-vendor-hw
+EDK II：0050 Images Verified
+镜像：C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-vendor-stock-v3.img
+大小：1212416 字节
+SHA256：93d9ffbfc7c1bc65ea68fea6f329c2c2cc9632d6eaac670a91ac382138e26432
+```
+
+该镜像仍使用临时 Android Boot v4 封装，不追加 giulia DTB，不执行 `fastboot flash`。下一步先让设备回到第一阶段 bootloader，再使用 `fastboot boot` 启动 v3，拍摄日志最底部，确认 `RpmhDxe` 之后是否进入 `UFSDxe` 和文件系统驱动。当前不能因为某个协议警告就删除对应驱动；应先确认它是否真正阻断了后续执行。

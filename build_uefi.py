@@ -45,6 +45,7 @@ class BuildContext:
     build_mode:        str
     enable_secureboot: bool
     nx721j_ufs_test:   bool
+    nx721j_vendor_hw:  bool
     cleanup:           bool
     update:            bool
 
@@ -80,6 +81,7 @@ def parse_arguments () -> BuildContext:
     parser.add_argument ("-r", "--release",           type=str, default="RELEASE", choices=["RELEASE", "DEBUG"], help="Defines the Model Type of the Selected Target Device.")
     parser.add_argument ("-s", "--enable-secureboot", action="store_true",                                       help="Enables Secure Boot.")
     parser.add_argument ("--nx721j-ufs-test",          action="store_true",                                       help="Enables the NX721J read-only UFS dependency test build.")
+    parser.add_argument ("--nx721j-vendor-hw",         action="store_true",                                       help="Enables the full NX721J Qualcomm vendor hardware chain.")
     parser.add_argument ("-c", "--clean",             action="store_true",                                       help="Removes Old Build Files and Starts a Clean Build.")
     parser.add_argument ("-u", "--update",            action="store_true",                                       help="Updates your Local Repo before Building.")
 
@@ -93,6 +95,7 @@ def parse_arguments () -> BuildContext:
         build_mode        = args.release,
         enable_secureboot = args.enable_secureboot,
         nx721j_ufs_test   = args.nx721j_ufs_test,
+        nx721j_vendor_hw  = args.nx721j_vendor_hw,
         cleanup           = args.clean,
         update            = args.update
     )
@@ -232,7 +235,8 @@ def compile_uefi (ctx: BuildContext, fd_config: dict, script_path: Path) -> bool
         f"FD_SIZE={fd_size}",
         f"FD_BLOCKS={fd_blocks}",
         f"DEVICE_MODEL={ctx.device_model}",
-        f"NX721J_UFS_TEST={int(ctx.nx721j_ufs_test)}"
+        f"NX721J_UFS_TEST={int(ctx.nx721j_ufs_test)}",
+        f"NX721J_VENDOR_HW={int(ctx.nx721j_vendor_hw)}"
     ]
 
     # Compile UEFI

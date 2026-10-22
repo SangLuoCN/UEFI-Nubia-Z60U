@@ -2,7 +2,7 @@ APRIORI DXE {
   INF MdeModulePkg/Core/Dxe/DxeMain.inf
   INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
 
-  INF Binaries/giulia/QcomPkg/Drivers/EnvDxe/EnvDxeEnhanced.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/EnvDxe/EnvDxeEnhanced.inf
 
   INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
   INF MdeModulePkg/Universal/StatusCodeHandler/RuntimeDxe/StatusCodeHandlerRuntimeDxe.inf
@@ -12,7 +12,7 @@ APRIORI DXE {
   INF EmbeddedPkg/MetronomeDxe/MetronomeDxe.inf
   INF ArmPkg/Drivers/TimerDxe/TimerDxe.inf
 
-  INF Binaries/giulia/QcomPkg/Drivers/SmemDxe/SmemDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/SmemDxe/SmemDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/DALSYSDxe/DALSYSDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/HWIODxe/HWIODxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/HALIOMMUDxe/HALIOMMUDxe.inf
