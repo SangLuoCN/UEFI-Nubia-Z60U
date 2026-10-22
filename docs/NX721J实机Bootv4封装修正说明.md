@@ -140,3 +140,24 @@ SHA256: 7888c097ac277e77201f341a4d5f29ac43c4509a64c65fdda470d21fb1209568
 5. `SiliciumPkg/Library/BootManagerLib/BootManager.c` 的默认逻辑在无启动项时显示无系统图形，等待 10 秒后调用 `EfiResetShutdown`，所以随后回到 bootloader/Android 是预期行为，不是新的 SEC 或 GOP 崩溃证据。
 
 因此当前已完成“ABL -> BootShim -> SEC -> DXE -> GOP -> BDS”的 Stage 1 验证。下一阶段应建立独立的 UFS 存储测试配置，按 `UFSDxe -> CmdDb/PwrUtils/Rpmh/Npa/ULog/Vcs/Clock/SPMI/ICB/Smem` 的依赖顺序逐组加入，并每次只使用 `fastboot boot` 验证。现有 Stage 1 镜像必须保留为回退基线。
+
+## 2026 年 10 月 23 日 UFS 测试构建
+
+已新增显式开关 `--nx721j-ufs-test`。默认构建仍使用已验证的显示-only Stage 1；打开该开关时，FDF 切换到独立的 UFS 测试列表，加入 `UFSDxe` 及 `CmdDbDxe`、`PwrUtilsDxe`、`RpmhDxe`、`NpaDxe`、`ULogDxe`、`VcsDxe`、`ClockDxe`、`SPMIDxe`、`ICBDxe`、`SmemDxe`，保留 NX721J 的 SimpleFb/GOP，不加入完整 giulia 显示、USB、触控、充电和 RAM 管理链。
+
+构建结果：
+
+```text
+EDK II 镜像验证：50
+UEFI FD：0x300000 字节
+临时镜像：C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-stage1-ufs-test-v4.img
+SHA256：50be0cfa1e7703e410bddec6dfae2bae86fe48c95e0d2b648133161ce087de4d
+```
+
+实机测试使用：
+
+```text
+fastboot boot Mu-nx721j-stage1-ufs-test-v4.img
+```
+
+ABL 返回 `Sending OKAY`、`Booting OKAY`。等待 20 秒后主机没有重新枚举 fastboot 或 ADB；由于该测试镜像仍未加入 USB 调试链，这只能记录为“屏幕结果待确认”，不能单独判定 UFS 已初始化或已卡死。没有执行 `fastboot flash`、擦除、userdata 写入或其他分区修改。

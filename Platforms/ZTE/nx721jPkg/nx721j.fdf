@@ -82,8 +82,13 @@ READ_LOCK_CAP      = TRUE
 READ_LOCK_STATUS   = TRUE
 
 !if $(NX721J_VENDOR_HW) == 0
-  !include Include/APRIORI_STAGE1.inc
-  !include Include/DXE_STAGE1.inc
+  !if $(NX721J_UFS_TEST) == 1
+    !include Include/APRIORI_STAGE1_UFS.inc
+    !include Include/DXE_STAGE1_UFS.inc
+  !else
+    !include Include/APRIORI_STAGE1.inc
+    !include Include/DXE_STAGE1.inc
+  !endif
 !else
   !include Include/APRIORI.inc
   !include Include/DXE.inc

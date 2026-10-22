@@ -161,6 +161,7 @@ class PlatformBuilder (UefiBuilder, BuildSettingsManager):
         self.env.SetValue ("BLD_*_FD_BASE", self.env.GetValue("FD_BASE"), "Default")
         self.env.SetValue ("BLD_*_FD_SIZE", self.env.GetValue("FD_SIZE"), "Default")
         self.env.SetValue ("BLD_*_FD_BLOCKS", self.env.GetValue("FD_BLOCKS"), "Default")
+        self.env.SetValue ("BLD_*_NX721J_UFS_TEST", self.env.GetValue("NX721J_UFS_TEST", "0"), "Default")
 
         return 0
 

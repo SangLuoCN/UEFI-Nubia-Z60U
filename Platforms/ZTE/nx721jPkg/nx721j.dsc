@@ -31,6 +31,10 @@
   # 1 = load the giulia vendor hardware chain after the Stage 1 proof.
   NX721J_VENDOR_HW               = 0
 
+  # 0 = known-good display-only Stage 1.
+  # 1 = add only the Qualcomm storage dependency closure for UFS probing.
+  NX721J_UFS_TEST                = 0
+
   #
   # 0 = SM8650-AA
   # 1 = SM8650-Q-AA
