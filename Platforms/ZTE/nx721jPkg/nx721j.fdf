@@ -90,8 +90,11 @@ READ_LOCK_STATUS   = TRUE
 !endif
   !include Include/RAW.inc
 
-  # RAM Manager
+  # RAM Manager depends on the Qualcomm RAM Partition Protocol exposed by the
+  # full vendor hardware chain.  Stage 1 intentionally omits that chain.
+!if $(NX721J_VENDOR_HW) == 1
   INF SiliciumPkg/Drivers/RamManagerDxe/RamManagerDxe.inf
+!endif
 
   # SmBios
   INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf

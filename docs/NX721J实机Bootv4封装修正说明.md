@@ -121,3 +121,22 @@ $fastboot = 'C:\Users\SangLuo\AppData\Local\Microsoft\WinGet\Packages\Google.Pla
 如果仍然只出现闪电标志并回到 charger，下一步不应继续改 XNU 或 GPU，而应在 UEFI 阶段加入最早期串口/内存标记，确认失败发生在 ABL 跳转、BootShim 解压、UEFI DXE、GOP 初始化还是菜单载荷阶段。只有看到 UEFI 菜单或 `UNIXNU:` 日志后，才继续 UniXNU 和 iOS 的后续移植。
 
 本说明不执行 `fastboot flash`、不修改 `boot`、`vendor_boot`、`dtbo`、`abl`、GPT 或 `userdata`。
+
+## 2026 年 10 月 23 日 Stage 1 已进入 BDS
+
+在修正 `Display_Reserved`、`TZApps_Reserved`，并从 Stage 1 中移除依赖 Qualcomm RAM Partition Protocol 的 `RamManagerDxe` 后，使用临时镜像：
+
+```text
+C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-stage1-v4-gop-menu.img
+SHA256: 7888c097ac277e77201f341a4d5f29ac43c4509a64c65fdda470d21fb1209568
+```
+
+实机现象为：屏幕显示 `failed to find operating system`，随后自动重启。这个结果与当前 Stage 1 的驱动列表完全一致，含义如下：
+
+1. `SEC: memory HOBs done`、`SEC: platform HOBs done (Success)` 和 `SEC: loading DXE core` 已经通过；
+2. `Nx721jStage1Dxe` 已经通过真实的 `0xE3940000` framebuffer 建立 GOP；
+3. `RamManagerDxe` 不再被调度，因此不再触发 `Failed to Locate RAM Partition Protocol`；
+4. BDS 已经运行，但 Stage 1 只包含 `DiskIoDxe`、`PartitionDxe`、`FatDxe` 等通用层，没有 Qualcomm UFS 控制器和供电/时钟依赖，也没有 DarwinBoot 或其他 OS 载荷，因此没有可启动的文件系统和 `Boot####`；
+5. `SiliciumPkg/Library/BootManagerLib/BootManager.c` 的默认逻辑在无启动项时显示无系统图形，等待 10 秒后调用 `EfiResetShutdown`，所以随后回到 bootloader/Android 是预期行为，不是新的 SEC 或 GOP 崩溃证据。
+
+因此当前已完成“ABL -> BootShim -> SEC -> DXE -> GOP -> BDS”的 Stage 1 验证。下一阶段应建立独立的 UFS 存储测试配置，按 `UFSDxe -> CmdDb/PwrUtils/Rpmh/Npa/ULog/Vcs/Clock/SPMI/ICB/Smem` 的依赖顺序逐组加入，并每次只使用 `fastboot boot` 验证。现有 Stage 1 镜像必须保留为回退基线。
