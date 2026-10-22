@@ -27,6 +27,10 @@
   FLASH_DEFINITION               = nx721jPkg/nx721j.fdf
   USE_CUSTOM_DISPLAY_DRIVER      = 0
 
+  # 0 = Stage 1: keep the ABL framebuffer and load Mu drivers only.
+  # 1 = load the giulia vendor hardware chain after the Stage 1 proof.
+  NX721J_VENDOR_HW               = 0
+
   #
   # 0 = SM8650-AA
   # 1 = SM8650-Q-AA
@@ -65,11 +69,18 @@
   gSiliciumPkgTokenSpaceGuid.PcdFrameBufferWidth|1116
   gSiliciumPkgTokenSpaceGuid.PcdFrameBufferHeight|2480
   gSiliciumPkgTokenSpaceGuid.PcdFrameBufferColorDepth|32
+  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferFontScale|2
+  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferDelay|30000
 
   #
   # Platform PEI
   #
   gQcomPkgTokenSpaceGuid.PcdPlatformType|"LA"
+
+!if $(NX721J_VENDOR_HW) == 0
+  # Without the stock vendor chain, do not consume stale XBL vendor HOBs.
+  gQcomPkgTokenSpaceGuid.PcdBuildXblHobs|FALSE
+!endif
 
 [LibraryClasses]
   #
@@ -83,6 +94,9 @@
   ConfigurationMapLib|nx721jPkg/Library/ConfigurationMapLib/ConfigurationMapLib.inf
 
 [Components]
+  # Stage 1 proof driver.  The FDF APRIORI/DXE lists control dispatch order.
+  nx721jPkg/Drivers/Nx721jStage1Dxe/Nx721jStage1Dxe.inf
+
   #
   # ACPI Tables
   #
