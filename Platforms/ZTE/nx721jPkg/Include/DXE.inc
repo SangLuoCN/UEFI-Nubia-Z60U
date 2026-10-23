@@ -35,6 +35,8 @@
   INF Binaries/nx721j/QcomPkg/Drivers/DALSYSDxe/DALSYSDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/HALIOMMUDxe/HALIOMMUDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/HWIODxe/HWIODxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/ChipInfoDxe/ChipInfoDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/PlatformInfoDxe/PlatformInfoDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/TLMMDxe/TLMMDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/PmicDxe/PmicDxeLa.inf
 

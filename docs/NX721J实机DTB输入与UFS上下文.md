@@ -157,3 +157,22 @@ v16 的活动平台清单已移除所有 `Binaries/giulia` 和 `Binaries/nx729j`
 SHA256：`F6834D3B925487BB7E76B333681529C98E37F20797C8E29F4BF9D8D4E99A0E74`
 
 本版尚未再次执行 `fastboot boot`；设备端验证仍需观察 DxeCore 断言是否消失，以及原厂 VariableDxe 是否能在 Z60U 的 QSEE/存储上下文中安装变量架构协议。没有执行永久刷写、擦除或分区写入。
+
+## v17：按 ACE5 结构恢复 NX721J 原厂协议提供者
+
+对照 ACE5 `giulia` 的 APRIORI/DXE 顺序后，确认 `ChipInfoDxe` 和 `PlatformInfoDxe` 是 Clock/RPMh/SMBIOS 依赖链中的协议提供者；ACE5 使用的是 giulia 原厂二进制，不能直接移植到 Z60U。NX721J 原厂 FV 中实际存在对应模块，本版从 Z60U 原厂 FV 提取并加入 `Binaries/nx721j`：
+
+```text
+ChipInfoDxe.efi       49152 bytes  SHA256 05CCBD5FFB357815D4D5A98B199D31DF01C3D0F6FD62AB0652366C4043F63079
+PlatformInfoDxe.efi   32768 bytes  SHA256 12F60EF0E039B3BEC25AEE51B836C1013114981F6F9E1F118D4E429D44B82FF2
+```
+
+两个模块同时加入 APRIORI 和普通 DXE 列表，位置保持在 NX721J 原厂 `HWIODxe` 之后、`HALIOMMUDxe/TLMM` 之前；没有加入 ACE5、giulia、nx729j 或 sheng 二进制，也没有加入无法从 NX721J 原厂 FV 证明来源的 `DDRInfoDxe`。
+
+本版构建命令：
+
+```powershell
+python build_uefi.py -c -d nx721j -r DEBUG --nx721j-vendor-hw --nx721j-stock-runtime --dtb C:\Users\SangLuo\Desktop\Projects\UniXNU-Z60U-artifacts\2026-10-22-twrp-readonly\dt\nx721j-live-proc.dtb
+```
+
+构建结果：`EDK II: 0050 Images Verified`；镜像 `Mu-nx721j-v17-z60u-provider-chain.img`，大小 `2011136` 字节，SHA256 `D9ECB3FEAF630EE58753F59A261155F052D2D3DBDB6CA3979BBAE76F0FD1F868`。`FVMAIN.inf` 已确认包含两个提供者和 NX721J `ClockDxe`，并保留 NX721J 原厂 `VariableDxe/ResetRuntimeDxe`。本版尚未在手机上执行新的 `fastboot boot`。
