@@ -118,7 +118,9 @@ APRIORI DXE {
   INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
 
   INF Binaries/nx721j/QcomPkg/Drivers/RscDxe/RscDxe.inf
+!if $(NX721J_ZTE_CONFIG) == 1
   INF Binaries/nx721j/QcomPkg/Drivers/VendorLogfsDxe/VendorLogfsDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/CfgUtilDxe/CfgUtilDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/NubiaBoardDxe/NubiaBoardDxe.inf
+!endif
 }

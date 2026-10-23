@@ -35,6 +35,10 @@
   # 1 = add only the Qualcomm storage dependency closure for UFS probing.
   NX721J_UFS_TEST                = 0
 
+  # 0 = UFS-first: defer ztecfg/logfs/board consumers until UFS Block I/O works.
+  # 1 = dispatch the stock NX721J ztecfg/logfs/board consumer chain.
+  NX721J_ZTE_CONFIG               = 0
+
   #
   # 0 = SM8650-AA
   # 1 = SM8650-Q-AA

@@ -63,9 +63,11 @@
   INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
 
   INF Binaries/nx721j/QcomPkg/Drivers/RscDxe/RscDxe.inf
+!if $(NX721J_ZTE_CONFIG) == 1
   INF Binaries/nx721j/QcomPkg/Drivers/VendorLogfsDxe/VendorLogfsDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/CfgUtilDxe/CfgUtilDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/NubiaBoardDxe/NubiaBoardDxe.inf
+!endif
 
   INF EmbeddedPkg/SimpleTextInOutSerial/SimpleTextInOutSerial.inf
   INF MdeModulePkg/Universal/PrintDxe/PrintDxe.inf
