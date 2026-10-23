@@ -34,7 +34,7 @@ APRIORI DXE {
   INF Binaries/giulia/QcomPkg/Drivers/ShmBridgeDxe/ShmBridgeDxeLA.inf
   INF Binaries/giulia/QcomPkg/Drivers/TzDxe/ScmDxeCompat.inf
   INF Binaries/nx721j/QcomPkg/Drivers/TLMMDxe/TLMMDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/I2CDxe/I2CDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/I2CDxe/I2CDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/SPMIDxe/SPMIDxe.inf
 
 !if $(NX721J_VENDOR_HW) == 1
@@ -81,10 +81,10 @@ APRIORI DXE {
 
   INF Binaries/giulia/QcomPkg/Drivers/SPIDxe/SPIDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/PmicGlinkDxe/PmicGlinkDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/UsbPwrCtrlDxe/UsbPwrCtrlDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/QcomChargerDxe/QcomChargerDxeLA.inf
-  INF Binaries/giulia/QcomPkg/Drivers/ChargerExDxe/ChargerExDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/UsbfnDwc3Dxe/UsbfnDwc3Dxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/UsbPwrCtrlDxe/UsbPwrCtrlDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/QcomChargerDxe/QcomChargerDxeLA.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/ChargerExDxe/ChargerExDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/UsbfnDwc3Dxe/UsbfnDwc3Dxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/XhciPciEmulationDxe/XhciPciEmulationDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/XhciDxe/XhciDxe.inf
 
@@ -92,9 +92,9 @@ APRIORI DXE {
   INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 
-  INF Binaries/giulia/QcomPkg/Drivers/UsbMsdDxe/UsbMsdDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/UsbDeviceDxe/UsbDeviceDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/UsbConfigDxe/UsbConfigDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/UsbMsdDxe/UsbMsdDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/UsbDeviceDxe/UsbDeviceDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/UsbConfigDxe/UsbConfigDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/ButtonsDxe/ButtonsDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/TsensDxe/TsensDxe.inf
 

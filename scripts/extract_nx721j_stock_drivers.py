@@ -23,6 +23,20 @@ class Driver:
 
 
 DRIVERS = (
+    Driver("UsbInitDxe", "0A134F0E-075E-40B3-9C63-3B3906804663"),
+    Driver("UsbMsdDxe", "5AF77F10-90DF-4E7E-8325-A17EC09D5443"),
+    Driver("PmicDxe", "5776232E-082D-4B75-9A0E-FE1D13F7A5D9"),
+    Driver("TsensDxe", "F09AD92E-485C-9CDB-3E05-3385C38F94CC"),
+    Driver("PwrUtilsDxe", "0401B830-BFF9-44A2-A5F6-95734A33C017"),
+    Driver("QcomChargerDxeLA", "4BCE7F36-428E-4393-99E3-7E0844404DBA"),
+    Driver("UsbPwrCtrlDxe", "11FAED4C-B21F-4D88-8E48-C4C28A1E50DF"),
+    Driver("UsbConfigDxe", "CD823A4D-7DEC-4531-AE5D-4134FA4127B8"),
+    Driver("UsbDeviceDxe", "3299A266-15F0-4346-8318-716336736D3E"),
+    Driver("UsbfnDwc3Dxe", "94F8A6A7-DC34-4101-88C1-99179CCEAE83"),
+    Driver("I2CDxe", "04DE8591-D2B3-4077-BBBE-B12070094EB6"),
+    Driver("ButtonsDxe", "5BD181DB-0487-4F1A-AE73-820E165611B3"),
+    Driver("ChargerExDxe", "2E3042F3-2BB9-463F-8866-56D75B7C4AB0"),
+    Driver("RscDxe", "EA888DF7-D431-44AF-844C-7B29390F2758"),
     Driver("IPCCDxe", "42031F68-1F0B-429B-93F1-0EB0CF89DDBF"),
     Driver("Smp2pDxe", "23F4E10E-3050-4073-B94C-B80D7EBC959E"),
     Driver("SSRDxe", "6B593A13-4E39-4CF5-B4E2-50B9540A324A"),
@@ -31,6 +45,16 @@ DRIVERS = (
     Driver("VariableDxe", "2B0ECDCE-01AE-446E-9FFD-C4217DE0340F"),
     Driver("ResetRuntimeDxe", "3AE17DB7-3CC5-4B89-9304-9549211057EF"),
 )
+
+DEFAULT_DRIVER_NAMES = {
+    "IPCCDxe",
+    "Smp2pDxe",
+    "SSRDxe",
+    "GLinkDxe",
+    "PmicGlinkDxe",
+    "VariableDxe",
+    "ResetRuntimeDxe",
+}
 
 
 def align(value: int, boundary: int) -> int:
@@ -145,7 +169,9 @@ def main() -> int:
     if args.compressed_volume_ffs_offset is not None:
         data = extract_compressed_volume(data, args.compressed_volume_ffs_offset)
         print(f"decompressed volume: 0x{len(data):X} bytes")
-    selected_names = set(args.drivers.split(",")) if args.drivers else {driver.name for driver in DRIVERS}
+    selected_names = (
+        set(args.drivers.split(",")) if args.drivers else DEFAULT_DRIVER_NAMES
+    )
     selected = tuple(driver for driver in DRIVERS if driver.name in selected_names)
     unknown = selected_names - {driver.name for driver in DRIVERS}
     if unknown:
