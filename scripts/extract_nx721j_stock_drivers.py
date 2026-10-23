@@ -27,6 +27,18 @@ DRIVERS = (
     Driver("UsbInitDxe", "0A134F0E-075E-40B3-9C63-3B3906804663"),
     Driver("UsbMsdDxe", "5AF77F10-90DF-4E7E-8325-A17EC09D5443"),
     Driver("PmicDxe", "5776232E-082D-4B75-9A0E-FE1D13F7A5D9"),
+    # The output root is Binaries/nx721j/QcomPkg/Drivers.  These UEFI-core
+    # drivers intentionally live in the sibling MdeModulePkg hierarchy.
+    Driver(
+        "DiskIoDxe",
+        "6B38F7B4-AD98-40E9-9093-ACA2B5A253C4",
+        "../../MdeModulePkg/Universal/Disk/DiskIoDxe",
+    ),
+    Driver(
+        "PartitionDxe",
+        "1FA1F39E-FEFF-4AAE-BD7B-38A070A3B609",
+        "../../MdeModulePkg/Universal/Disk/PartitionDxe",
+    ),
     Driver("TsensDxe", "F09AD92E-485C-9CDB-3E05-3385C38F94CC"),
     Driver("PwrUtilsDxe", "0401B830-BFF9-44A2-A5F6-95734A33C017"),
     Driver("QcomChargerDxeLA", "4BCE7F36-428E-4393-99E3-7E0844404DBA"),

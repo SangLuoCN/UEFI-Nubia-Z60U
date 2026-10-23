@@ -46,6 +46,7 @@ class BuildContext:
     enable_secureboot: bool
     nx721j_ufs_test:   bool
     nx721j_vendor_hw:  bool
+    dtb_path:          Path | None
     cleanup:           bool
     update:            bool
 
@@ -82,6 +83,7 @@ def parse_arguments () -> BuildContext:
     parser.add_argument ("-s", "--enable-secureboot", action="store_true",                                       help="Enables Secure Boot.")
     parser.add_argument ("--nx721j-ufs-test",          action="store_true",                                       help="Enables the NX721J read-only UFS dependency test build.")
     parser.add_argument ("--nx721j-vendor-hw",         action="store_true",                                       help="Enables the full NX721J Qualcomm vendor hardware chain.")
+    parser.add_argument ("--dtb",                      type=Path,                                                 help="Appends this DTB instead of Resources/DTBs/<device>.dtb.")
     parser.add_argument ("-c", "--clean",             action="store_true",                                       help="Removes Old Build Files and Starts a Clean Build.")
     parser.add_argument ("-u", "--update",            action="store_true",                                       help="Updates your Local Repo before Building.")
 
@@ -96,9 +98,64 @@ def parse_arguments () -> BuildContext:
         enable_secureboot = args.enable_secureboot,
         nx721j_ufs_test   = args.nx721j_ufs_test,
         nx721j_vendor_hw  = args.nx721j_vendor_hw,
+        dtb_path          = args.dtb,
         cleanup           = args.clean,
         update            = args.update
     )
+
+def configure_windows_host_tools () -> bool:
+    if os.name != "nt":
+        return True
+
+    clang_paths: list[Path] = []
+    clang_bin = os.environ.get ("CLANG_BIN")
+    if clang_bin:
+        clang_paths.append (Path (clang_bin) / "clang.exe")
+
+    clang_from_path = shutil.which ("clang")
+    if clang_from_path:
+        clang_paths.append (Path (clang_from_path))
+
+    clang_paths.append (Path ("C:/Program Files/LLVM/bin/clang.exe"))
+    clang_path = next ((path for path in clang_paths if path.is_file ()), None)
+    if clang_path is None:
+        logger.error ("Unable to locate clang.exe. Install LLVM or set CLANG_BIN.")
+        return False
+
+    nmake_paths: list[Path] = []
+    clang_host_bin = os.environ.get ("CLANG_HOST_BIN")
+    if clang_host_bin:
+        nmake_paths.append (Path (clang_host_bin) / "nmake.exe")
+
+    nmake_from_path = shutil.which ("nmake")
+    if nmake_from_path:
+        nmake_paths.append (Path (nmake_from_path))
+
+    visual_studio_root = Path ("C:/Program Files (x86)/Microsoft Visual Studio")
+    if visual_studio_root.is_dir ():
+        nmake_paths.extend (sorted (
+            visual_studio_root.glob ("*/**/VC/Tools/MSVC/*/bin/Hostx64/x64/nmake.exe"),
+            reverse=True
+        ))
+
+    nmake_path = next ((path for path in nmake_paths if path.is_file ()), None)
+    if nmake_path is None:
+        logger.error ("Unable to locate MSVC nmake.exe. Install Visual Studio Build Tools or set CLANG_HOST_BIN.")
+        return False
+
+    clang_directory = str (clang_path.parent)
+    path_entries = os.environ.get ("PATH", "").split (os.pathsep)
+    if not any (Path (entry).resolve () == clang_path.parent.resolve () for entry in path_entries if entry):
+        os.environ["PATH"] = clang_directory + os.pathsep + os.environ.get ("PATH", "")
+
+    os.environ["CLANG_BIN"] = clang_directory + os.sep
+    # tools_def.txt appends the literal "make", so this must end in the
+    # leading "n" from nmake.exe rather than simply name its directory.
+    os.environ["CLANG_HOST_BIN"] = str (nmake_path)[:-len ("make.exe")]
+    os.environ.setdefault ("PYTHONUTF8", "1")
+    logger.info (f"Using LLVM: {clang_path}")
+    logger.info (f"Using MSVC nmake: {nmake_path}")
+    return True
 
 def get_device_package_path (device: str) -> Path | None:
     # Set Device Package Name
@@ -249,7 +306,7 @@ def create_android_boot_img (ctx: BuildContext, image_kernel_config: dict, image
 
     # Set File Paths
     android_kernel  = device_pkg_path    / f"{ctx.device}-kernel"
-    device_dtb      = RESOURCE_DTBS_PATH / f"{ctx.device}.dtb"
+    device_dtb      = ctx.dtb_path if ctx.dtb_path is not None else RESOURCE_DTBS_PATH / f"{ctx.device}.dtb"
     uefi_fd         = fv_path            / "SILICIUM_UEFI.fd"
     uefi_fd_gz      = fv_path            / "SILICIUM_UEFI.fd.gz"
 
@@ -309,8 +366,10 @@ def create_android_boot_img (ctx: BuildContext, image_kernel_config: dict, image
     if image_kernel_config.get ("append_dtb"):
         # Verify DTB Path
         if not device_dtb.is_file ():
-            logger.error (f"The Device DTB is Missing in \"{RESOURCE_DTBS_PATH}\"!")
+            logger.error (f"The Device DTB is Missing: \"{device_dtb}\"!")
             return False
+
+        logger.info (f"Appending Device DTB: {device_dtb}")
 
         # Append DTB
         try:
@@ -436,6 +495,10 @@ def main ():
 
     # Parse Script Arguments
     ctx = parse_arguments ()
+
+    # Resolve the Windows host compiler before EDK II creates makefiles.
+    if not configure_windows_host_tools ():
+        sys.exit (1)
 
     # Get Device Package Path
     device_package_path = get_device_package_path (ctx.device)

@@ -44,8 +44,8 @@ APRIORI DXE {
 !endif
 
   INF Binaries/nx721j/QcomPkg/Drivers/PmicDxe/PmicDxeLa.inf
-  INF Binaries/giulia/MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
-  INF Binaries/giulia/MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+  INF Binaries/nx721j/MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
+  INF Binaries/nx721j/MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
 
   INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
 

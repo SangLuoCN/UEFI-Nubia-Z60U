@@ -492,4 +492,103 @@ EDK II：0050 Images Verified
 SHA256：7358F2D48D83EBA2CA738729069D005D6DE70A10BB4B9EC006E8978B6410F8A2
 ```
 
-v11 尚未发送到实机。下一次仅在第一阶段 bootloader 可见时执行 `fastboot boot` 临时启动，检查三个 `... Arch Protocol not present` 和 `ASSERT [DxeCore]` 是否消失；不执行 `fastboot flash`、擦除、userdata 写入或 GPT 修改。
+### v11 实机结果
+
+v11 已于 2026 年 10 月 23 日使用 `fastboot boot` 临时启动；ABL 返回 `Sending OKAY`、`Booting OKAY`，总耗时 10.112 秒。没有执行 `fastboot flash`、擦除、userdata 写入或 GPT 修改。
+
+用户确认首个当前停点仍为 `ASSERT [DxeCore] DxeMain.c(581)`。该断言等待一段时间后，原厂 `CfgUtilDxe` 又输出：
+
+```text
+Error Reading ztecfg info: No Media
+Synchronous Exception
+Data abort: Translation fault, second level
+CfgUtilDxe.dll -> VendorLogfsDxe.dll -> DxeCore.pdb
+```
+
+这提供了比 DxeCore 汇总断言更早、更具体的根因。异常 PC 是 `CfgUtilDxe + 0x3698`；反汇编为 `ldp x12, x13, [x1]`，实机寄存器 `x1 = 0`、复制长度 `x2 = 0x2000`。`CfgUtilDxe + 0x1638` 在读取 `ztecfg` 返回错误后仍调用该拷贝例程，因此空指针异常是原厂模块在“配置分区不可读”前提下的错误处理缺陷，不能用删除 CfgUtilDxe 或吞掉异常来修复。
+
+此前只读 TWRP 采集明确记录 `ztecfg -> /dev/block/sdf6`，故不能把 `No Media` 解释为分区不存在。它表明当前 UEFI 的 UFS Block I/O 路径尚未使该分区可读。
+
+## 2026 年 10 月 23 日 v12 UFS MMIO 与原厂分区栈修复
+
+### 实机 DT 与当前内存表对照
+
+实机 DT 的 UFS 节点为：
+
+```text
+/soc/ufsphy_mem@1d80000: 0x01D80000 / 0x00002000
+/soc/ufshc@1d84000:
+  0x01D84000 / 0x00003000
+  0x01D88000 / 0x00008000
+  0x01D90000 / 0x00009000
+  0x01DA5000 / 0x00002000
+  0x01DA4000 / 0x00000010
+```
+
+v11 的 NX721J `MemoryMapLib` 没有覆盖任何 UFS MMIO 区间。这与早期 `UFSDxe` 的 `EFI_DEVICE_ERROR`、后续 `ztecfg` 的 `EFI_NO_MEDIA` 相符。v12 新增连续的 `0x01D80000 / 0x00030000` 非安全设备映射，覆盖 DT 指出的所有上述窗口。
+
+同时发现当前的 `DiskIoDxe`、`PartitionDxe` 仍来自 giulia。两者与 Z60U 原厂同尺寸但 SHA256 不同，不能视为等价实现。已从 NX721J 原厂 FV 提取并切换为：
+
+```text
+DiskIoDxe    GUID 6B38F7B4-AD98-40E9-9093-ACA2B5A253C4
+PartitionDxe GUID 1FA1F39E-FEFF-4AAE-BD7B-38A070A3B609
+UFSDxe       GUID 0D35CD8E-97EA-4F9A-96AF-0F0D89F76567（此前已为原厂）
+```
+
+最终 FV 回读比较确认三者与对应 NX721J 原厂 PE32 均为 `same=True`。原本文件名为 `PmicDxeLa.patched.efi` 的 PmicDxe 也重新与原厂提取 PE32 做 SHA256 比较，哈希完全相同，未被修改。
+
+### v12 构建结果
+
+```text
+命令：build_uefi.py -d nx721j -r DEBUG --nx721j-vendor-hw
+EDK II：0050 Images Verified
+FVMAIN：7589888 字节，总可用余量 328 字节
+镜像：C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-vendor-stock-v12-ufs-mmio-storage.img
+大小：2125824 字节
+SHA256：B5D60E2BF04EE2365BE38398F1B41984B7C57F9A1E5C0BD97AD5A4225E76B1FA
+```
+
+### v12 实机结果
+
+2026-10-23 已通过第一阶段 bootloader 执行一次 `fastboot boot Mu-nx721j-vendor-stock-v12-ufs-mmio-storage.img`。主机返回 `Sending OKAY`、`Booting OKAY`，总耗时 10.159 秒；没有执行 `fastboot flash`、擦除、userdata/GPT 写入或其他永久写入。
+
+实机仍报告 `Error Reading ztecfg info: No Media`，随后原厂 `CfgUtilDxe` 在空输出缓冲区上触发二级地址翻译异常。因此 v12 证明“补足连续 UFS MMIO 映射并换用原厂 DiskIo/PartitionDxe”不足以让 UFS Block I/O 可读，不能把本版本标记为存储修复成功。
+
+下一步不是删除 `CfgUtilDxe` 或吞掉异常，而是核对原厂 UFS 驱动在启动时获得的固件设备树/HOB 配置、UFS 电源/时钟和 IOMMU 初始化数据；只有证明这些输入与临时启动镜像一致后，才进行下一次 `fastboot boot`。
+
+## 2026 年 10 月 23 日 v13 实机运行时设备树输入
+
+本节更新当前构建结论。本文前部关于“不追加 DTB”的描述记录的是早期 Boot v4 封装调查，不再代表当前 NX721J 完整厂商链的构建输入。
+
+已确认受版本控制的 `Resources/DTBs/nx721j.dtb` 与 `Resources/DTBs/giulia.dtb` 字节完全相同，SHA256 都是：
+
+```text
+E694B5715E2F23EE0906F37C1B111FA3045CB21EF4356ED1A7CAC834D68CDCA3
+```
+
+这份文件的 model 是 `Qualcomm Technologies, Inc. Pineapple MTP,giulia`，不是 NX721J 的实机运行时树。与之对照，TWRP 只读采集的 NX721J `/proc/device-tree` 根节点 model 为 `Qualcomm Technologies, Inc. Pineapple MTP`，并包含已启用的 `soc/ufshc@1d84000` 节点。
+
+为避免把设备转储加入 Git，工程新增 `scripts/rebuild_dtb_from_proc_tree.py`。它将外部工件目录中的 `/proc/device-tree` 层级重建为标准 FDT v17 二进制；脚本、节点/属性计数和 FDT 头部校验均在工程内，实际 DTB 始终保留在 Git 外部目录。
+
+v13 使用的重建文件为：
+
+```text
+C:\Users\SangLuo\Desktop\Projects\UniXNU-Z60U-artifacts\2026-10-22-twrp-readonly\dt\nx721j-live-proc.dtb
+节点数：4867
+属性数：28108
+大小：976380 字节
+SHA256：40b0e330adabecf143e61b9066c77849ea81f3c0012cfd7ce6376099f33d3b1e
+```
+
+`build_uefi.py` 新增 `--dtb` 参数，使构建可以显式将该外部 DTB 追加到 Android boot image，而不是悄然回退到 giulia 输入。v13 只改变这项板级输入，保留 v12 已验证进入 FV 的 NX721J 原厂 UFS、DiskIo、Partition 和完整厂商驱动链。
+
+```text
+临时镜像：C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-vendor-stock-v13-live-proc-dtb.img
+大小：2195456 字节
+SHA256：E5FDEA881FEDB1AD3CF0BF9CE5B2C4AB217401B4CC5640FDD510FD625097171C
+EDK II：0050 Images Verified
+```
+
+离线检查确认该镜像的 kernel 载荷可解压为 `BootShim + 0x300000` 字节 UEFI FD，末尾 DTB 的 SHA256 与上面的实机重建 DTB 一致。v13 尚未发送到手机，因此不能把它写成 UFS 已修复。
+
+还需要明确两个边界：BootShim 会保留 ABL 传入的 `x0`，而 UFS 原厂模块还通过 `DTBExtnProtocol` 查询 `/soc/storage/ufs0`、电源、时钟和 IOMMU 配置。追加 Linux 运行时树能消除“把 giulia 树交给 ABL/BootShim”的明确错误，但尚不能证明 XBL 的 DTB 扩展 HOB 已完整提供原厂 UFS 固件配置。下一次临时启动必须先观察 `Error Reading ztecfg info: No Media` 是否改变；若仍存在，下一步是为 DTB 扩展协议与 UFS 初始化添加定点诊断，而不是删除 `CfgUtilDxe`、`UFSDxe` 或隐藏断言。

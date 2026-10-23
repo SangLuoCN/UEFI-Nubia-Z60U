@@ -42,8 +42,8 @@
 
   INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
 
-  INF Binaries/giulia/MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
-  INF Binaries/giulia/MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+  INF Binaries/nx721j/MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
+  INF Binaries/nx721j/MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
 
   INF FatPkg/EnhancedFatDxe/Fat.inf
   INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
