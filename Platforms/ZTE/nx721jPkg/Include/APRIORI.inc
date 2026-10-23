@@ -20,10 +20,10 @@ APRIORI DXE {
   INF Binaries/giulia/QcomPkg/Drivers/PlatformInfoDxe/PlatformInfoDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/HALIOMMUDxe/HALIOMMUDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/ULogDxe/ULogDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/IPCCDxe/IPCCDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/Smp2pDxe/Smp2pDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/SSRDxe/SSRDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/GLinkDxe/GLinkDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/IPCCDxe/IPCCDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/Smp2pDxe/Smp2pDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/SSRDxe/SSRDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/GLinkDxe/GLinkDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/CmdDbDxe/CmdDbDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/PwrUtilsDxe/PwrUtilsDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/NpaDxe/NpaDxe.inf
@@ -37,7 +37,11 @@ APRIORI DXE {
   INF Binaries/giulia/QcomPkg/Drivers/I2CDxe/I2CDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/SPMIDxe/SPMIDxe.inf
 
+!if $(NX721J_VENDOR_HW) == 1
+  INF Binaries/nx721j/QcomPkg/Drivers/ResetRuntimeDxe/ResetRuntimeDxe.inf
+!else
   INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
+!endif
 
   INF Binaries/nx721j/QcomPkg/Drivers/PmicDxe/PmicDxeLa.inf
   INF Binaries/giulia/MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
@@ -52,14 +56,18 @@ APRIORI DXE {
 
   INF Binaries/giulia/QcomPkg/Drivers/TzDxe/TzDxeLA.inf
 
+!if $(NX721J_VENDOR_HW) == 1
+  INF Binaries/nx721j/QcomPkg/Drivers/VariableDxe/VariableDxe.inf
+!else
   INF MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
+!endif
 
   INF Binaries/giulia/QcomPkg/Drivers/DDRInfoDxe/DDRInfoDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/OcdtDxe/OplusProject.inf
   INF Binaries/giulia/QcomPkg/Drivers/FeatureEnablerDxe/FeatureEnablerDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/PILProxyDxe/PILProxyDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/PILDxe/PILDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/GLinkDxe/GLinkDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/GLinkDxe/GLinkDxe.inf
 
   INF MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
   INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
@@ -72,7 +80,7 @@ APRIORI DXE {
   INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
 
   INF Binaries/giulia/QcomPkg/Drivers/SPIDxe/SPIDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/PmicGlinkDxe/PmicGlinkDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/PmicGlinkDxe/PmicGlinkDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/UsbPwrCtrlDxe/UsbPwrCtrlDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/QcomChargerDxe/QcomChargerDxeLA.inf
   INF Binaries/giulia/QcomPkg/Drivers/ChargerExDxe/ChargerExDxe.inf

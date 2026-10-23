@@ -15,9 +15,17 @@
 
   INF MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
   INF MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
+!if $(NX721J_VENDOR_HW) == 1
+  INF Binaries/nx721j/QcomPkg/Drivers/VariableDxe/VariableDxe.inf
+!else
   INF MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
+!endif
   INF EmbeddedPkg/EmbeddedMonotonicCounter/EmbeddedMonotonicCounter.inf
+!if $(NX721J_VENDOR_HW) == 1
+  INF Binaries/nx721j/QcomPkg/Drivers/ResetRuntimeDxe/ResetRuntimeDxe.inf
+!else
   INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
+!endif
   INF EmbeddedPkg/RealTimeClockRuntimeDxe/RealTimeClockRuntimeDxe.inf
   INF EmbeddedPkg/MetronomeDxe/MetronomeDxe.inf
   INF MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
@@ -79,12 +87,12 @@
 
   INF Binaries/giulia/QcomPkg/Drivers/ButtonsDxe/ButtonsDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/ChargerExDxe/ChargerExDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/IPCCDxe/IPCCDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/Smp2pDxe/Smp2pDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/SSRDxe/SSRDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/GLinkDxe/GLinkDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/IPCCDxe/IPCCDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/Smp2pDxe/Smp2pDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/SSRDxe/SSRDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/GLinkDxe/GLinkDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/OcdtDxe/OplusProject.inf
-  INF Binaries/giulia/QcomPkg/Drivers/PmicGlinkDxe/PmicGlinkDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/PmicGlinkDxe/PmicGlinkDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/QcomChargerDxe/QcomChargerDxeLA.inf
   INF Binaries/giulia/QcomPkg/Drivers/UsbPwrCtrlDxe/UsbPwrCtrlDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/TsensDxe/TsensDxe.inf

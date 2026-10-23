@@ -349,3 +349,49 @@ Finished. Total time: 10.154s
 ```
 
 等待 15 秒后设备没有重新枚举为 fastboot。这个主机端结果只能证明 ABL 接受并启动了镜像，不能替代手机屏幕日志判断 UEFI 的实际停点。
+
+## 2026 年 10 月 23 日 切换为 Z60U 原厂 NX721J 通信与运行时驱动
+
+### 问题确认
+
+此前配置存在一组不应长期保留的混用：`IPCCDxe`、`Smp2pDxe`、`SSRDxe`、`GLinkDxe`、`PmicGlinkDxe`、`VariableDxe` 和 `ResetRuntimeDxe` 使用了 `Binaries/giulia` 下的预编译文件，而时钟、电源、UFS、SMEM 等其他模块使用 `Binaries/nx721j` 文件。
+
+不能因为 FFS GUID 或文件名相同就认为二进制等价。对比结果显示，七个模块的 PE32 哈希全部不同；`PmicGlinkDxe` 的 giulia 文件为 53248 字节，而 Z60U 原厂文件为 49152 字节；`ResetRuntimeDxe` 的 giulia 文件为 36864 字节，而 Z60U 原厂文件为 45056 字节。这个混用会使通信协议、共享内存、QMI、PMIC GLink、变量运行时和复位协议之间出现不匹配，后续可能表现为中断循环、协议找不到、DXE 断言或运行时复位失败。
+
+### 原厂来源与提取
+
+目标文件来自 Z60U 原厂 `uefi-full.img` 中的压缩 Volume Image，先解压 gzip GUID-defined section，再按 FFS GUID 提取 PE32 和 DXE dependency section。提取过程已经固化为：
+
+```text
+C:\Users\SangLuo\Desktop\Projects\uefi-z60u\scripts\extract_nx721j_stock_drivers.py
+```
+
+原厂 FFS 校验结果：
+
+```text
+IPCCDxe         FFS 0x9048  PE32 0x9000  DEPEX 0x12
+Smp2pDxe        FFS 0xB03A  PE32 0xB000  DEPEX 0x02
+SSRDxe          FFS 0xE036  PE32 0xE000  DEPEX 0x02
+GLinkDxe        FFS 0xF04A  PE32 0xF000  DEPEX 0x12
+PmicGlinkDxe    FFS 0xC042  PE32 0xC000  DEPEX 0x02
+VariableDxe     FFS 0xE040  PE32 0xE000  DEPEX 0x02
+ResetRuntimeDxe FFS 0xB048  PE32 0xB000  DEPEX 0x02
+```
+
+### 工程修改
+
+`APRIORI.inc` 和 `DXE.inc` 中上述七个模块已经全部从 `Binaries/giulia` 切换为 `Binaries/nx721j`。构建后的 `FVMAIN.inf` 包含目标 GUID，且从构建 FFS 中重新提取的 PE32 与 `Binaries/nx721j` 原厂文件逐个哈希相同，确认没有被旧缓存或 giulia 文件覆盖。
+
+本次没有删除通信驱动，也没有通过跳过 `RamManagerDxe`、UFS、GLink 或 IPCC 来掩盖问题。当前仍保留的其他 giulia 模块尚未凭原厂 FFS 逐项完成替换，后续必须继续按同样方法审计，尤其是 `RscDxe`、`I2CDxe`、USB、充电、显示和 TZ/安全链，不能仅按芯片型号相近直接判断兼容。
+
+### v9 构建结果
+
+```text
+命令：build_uefi.py -d nx721j -r DEBUG --nx721j-vendor-hw
+EDK II：0050 Images Verified
+镜像：C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-vendor-stock-v9-nx721j-drivers.img
+大小：2125824 字节
+SHA256：E2FD316A00066814F929E048FF3617D5196A6B462341C0268E67FF234CE269AF
+```
+
+主机端当前 `fastboot devices` 为空，因此 v9 尚未发送到实机；没有执行 `fastboot flash`、擦除、userdata 写入或 GPT 修改。下一次手机重新进入第一阶段 bootloader 后，只执行 `fastboot boot`，重点观察 `0x105` 中断循环是否消失，以及 `Variable Arch Protocol`、`Reset Arch Protocol` 和后续 UFS/BDS 停点是否改变。
