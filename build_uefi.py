@@ -47,6 +47,7 @@ class BuildContext:
     nx721j_ufs_test:   bool
     nx721j_vendor_hw:  bool
     nx721j_zte_config: bool
+    nx721j_stock_runtime: bool
     dtb_path:          Path | None
     cleanup:           bool
     update:            bool
@@ -85,6 +86,7 @@ def parse_arguments () -> BuildContext:
     parser.add_argument ("--nx721j-ufs-test",          action="store_true",                                       help="Enables the NX721J read-only UFS dependency test build.")
     parser.add_argument ("--nx721j-vendor-hw",         action="store_true",                                       help="Enables the full NX721J Qualcomm vendor hardware chain.")
     parser.add_argument ("--nx721j-zte-config",        action="store_true",                                       help="Enables NX721J ztecfg/logfs/board consumers after UFS is proven.")
+    parser.add_argument ("--nx721j-stock-runtime",     action="store_true",                                       help="Uses the stock NX721J VariableDxe and ResetRuntimeDxe instead of the generic UEFI runtime drivers.")
     parser.add_argument ("--dtb",                      type=Path,                                                 help="Appends this DTB instead of Resources/DTBs/<device>.dtb.")
     parser.add_argument ("-c", "--clean",             action="store_true",                                       help="Removes Old Build Files and Starts a Clean Build.")
     parser.add_argument ("-u", "--update",            action="store_true",                                       help="Updates your Local Repo before Building.")
@@ -101,6 +103,7 @@ def parse_arguments () -> BuildContext:
         nx721j_ufs_test   = args.nx721j_ufs_test,
         nx721j_vendor_hw  = args.nx721j_vendor_hw,
         nx721j_zte_config = args.nx721j_zte_config,
+        nx721j_stock_runtime = args.nx721j_stock_runtime,
         dtb_path          = args.dtb,
         cleanup           = args.clean,
         update            = args.update
@@ -297,7 +300,8 @@ def compile_uefi (ctx: BuildContext, fd_config: dict, script_path: Path) -> bool
         f"DEVICE_MODEL={ctx.device_model}",
         f"NX721J_UFS_TEST={int(ctx.nx721j_ufs_test)}",
         f"NX721J_VENDOR_HW={int(ctx.nx721j_vendor_hw)}",
-        f"NX721J_ZTE_CONFIG={int(ctx.nx721j_zte_config)}"
+        f"NX721J_ZTE_CONFIG={int(ctx.nx721j_zte_config)}",
+        f"NX721J_STOCK_RUNTIME={int(ctx.nx721j_stock_runtime)}"
     ]
 
     # Compile UEFI

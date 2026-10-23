@@ -13,16 +13,16 @@ APRIORI DXE {
   INF ArmPkg/Drivers/TimerDxe/TimerDxe.inf
 
   INF Binaries/nx721j/QcomPkg/Drivers/SmemDxe/SmemDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/DALSYSDxe/DALSYSDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/HWIODxe/HWIODxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/HALIOMMUDxe/HALIOMMUDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/ULogDxe/ULogDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/CmdDbDxe/CmdDbDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/PwrUtilsDxe/PwrUtilsDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/NpaDxe/NpaDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/RpmhDxe/RpmhDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/VcsDxe/VcsDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/ClockDxe/ClockDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/ICBDxe/ICBDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/SPMIDxe/SPMIDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/DALSYSDxe/DALSYSDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/HWIODxe/HWIODxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/HALIOMMUDxe/HALIOMMUDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/ULogDxe/ULogDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/CmdDbDxe/CmdDbDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/PwrUtilsDxe/PwrUtilsDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/NpaDxe/NpaDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/RpmhDxe/RpmhDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/VcsDxe/VcsDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/ClockDxe/ClockDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/ICBDxe/ICBDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/SPMIDxe/SPMIDxe.inf
 }

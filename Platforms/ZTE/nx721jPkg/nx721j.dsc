@@ -28,7 +28,7 @@
   USE_CUSTOM_DISPLAY_DRIVER      = 0
 
   # 0 = Stage 1: keep the ABL framebuffer and load Mu drivers only.
-  # 1 = load the giulia vendor hardware chain after the Stage 1 proof.
+  # 1 = load the NX721J stock vendor hardware chain after the Stage 1 proof.
   NX721J_VENDOR_HW               = 0
 
   # 0 = known-good display-only Stage 1.
@@ -39,10 +39,14 @@
   # 1 = dispatch the stock NX721J ztecfg/logfs/board consumer chain.
   NX721J_ZTE_CONFIG               = 0
 
+  # 0 = Ace5-style generic VariableRuntimeDxe/ResetSystemRuntimeDxe.
+  # 1 = use the stock NX721J VariableDxe/ResetRuntimeDxe pair.
+  NX721J_STOCK_RUNTIME            = 0
+
   #
   # 0 = SM8650-AA
   # 1 = SM8650-Q-AA
-  # 2 = SM8650-AB. Z60U live qcom,msm-id matches Resources/DTBs/giulia.dts.
+  # 2 = SM8650-AB. Z60U live qcom,msm-id matches the reconstructed NX721J DTB.
   # 3 = SM8650-Q-AB
   # 4 = SM8650-AC
   #

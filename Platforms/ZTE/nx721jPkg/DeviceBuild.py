@@ -164,6 +164,7 @@ class PlatformBuilder (UefiBuilder, BuildSettingsManager):
         self.env.SetValue ("BLD_*_NX721J_UFS_TEST", self.env.GetValue("NX721J_UFS_TEST", "0"), "Default")
         self.env.SetValue ("BLD_*_NX721J_VENDOR_HW", self.env.GetValue("NX721J_VENDOR_HW", "0"), "Default")
         self.env.SetValue ("BLD_*_NX721J_ZTE_CONFIG", self.env.GetValue("NX721J_ZTE_CONFIG", "0"), "Default")
+        self.env.SetValue ("BLD_*_NX721J_STOCK_RUNTIME", self.env.GetValue("NX721J_STOCK_RUNTIME", "0"), "Default")
 
         return 0
 

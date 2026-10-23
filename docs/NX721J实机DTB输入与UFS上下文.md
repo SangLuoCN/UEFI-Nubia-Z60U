@@ -85,7 +85,15 @@ SHA256：576BAEE8F0BD08D26CCCBBA8FAD55BCCAC00591136BCFF06C4A27B0F1F055C26
 EDK II：0050 Images Verified
 ```
 
-主机端构建后查询 `fastboot devices` 为空，所以 v14 尚未实机启动。下一次仍只使用临时 `fastboot boot`，观察 `UFSDxe` 是否真正发布 Block I/O；在此之前不恢复 `CfgUtilDxe` 组，也不执行分区写入。
+主机端构建后查询 `fastboot devices` 为空，所以当时 v14 尚未实机启动。之后 v14 已通过临时 `fastboot boot` 发送到设备，未执行永久刷写。
+
+## v14 实机结果
+
+v14 已通过临时 `fastboot boot` 启动。用户照片 `IMG20261023205537_BURST000_COVER.jpg` 是循环日志；按用户确认的循环规则，当前最新停点仍是 `ASSERT [DxeCore] DxeMain.c(581)`。照片下方的 USB、Buttons、Tsens、SimpleFb 和 Limits 内容属于较早的循环内容，不能当作本轮已经越过的日志。日志中没有 `VendorLogfsDxe`、`CfgUtilDxe`、`NubiaBoardDxe`、`ztecfg No Media` 或 `CfgUtilDxe.dll` 异常，说明 UFS-first 开关确实隔离了此前的板级配置崩溃路径。
+
+照片中最新停点前有 `Variable Arch Protocol not present`、`Variable Write Arch Protocol not present`、`Reset Arch Protocol not present` 和 `ASSERT [DxeCore] DxeMain.c(581)`，这才是当前需要修复的终止点。USB 的 NPA/PMIC/SPMI/Type-C 错误来自循环中的旧内容，当前不能据此判断它们是终止原因。
+
+Ace5 和 ZTE `nx729j` 参考链的 `APRIORI/DXE` 都使用通用 `VariableRuntimeDxe` 和 `ResetSystemRuntimeDxe`，而当前 NX721J 完整链默认使用原厂 `VariableDxe` 和 `ResetRuntimeDxe`。因此下一版增加 `NX721J_STOCK_RUNTIME` 开关，默认采用 Ace5 的通用运行时链；原厂模块保留，只有传入 `--nx721j-stock-runtime` 才启用。先验证通用链能否消除当前四个架构协议缺失，再继续观察 UFS。不要恢复三个 ztecfg 消费者，也不要执行永久刷写。
 
 ## 实机边界
 
@@ -97,3 +105,55 @@ $fastboot = 'C:\Users\SangLuo\AppData\Local\Microsoft\WinGet\Packages\Google.Pla
 ```
 
 禁止 `fastboot flash`、`erase`，禁止修改 `boot`、`vendor_boot`、`dtbo`、`abl`、GPT 或 `userdata`。本轮只记录屏幕底部最终日志和 `ztecfg` 报错是否变化。
+
+## v15：切换 Ace5 通用变量与复位运行时驱动
+
+v14 的实际最新停点仍是循环日志最底部的 `ASSERT [DxeCore] DxeMain.c(581)`，而不是照片中更低位置的旧循环内容。对照 Ace5 和 `nx729j` 后，v15 将运行时驱动选择改为：
+
+```text
+VariableRuntimeDxe
+ResetSystemRuntimeDxe
+```
+
+原厂 `VariableDxe`、`ResetRuntimeDxe` 文件没有删除，只由 `--nx721j-stock-runtime` 显式启用。v15 构建命令为：
+
+```powershell
+python build_uefi.py -c -d nx721j -r DEBUG --nx721j-vendor-hw --dtb <nx721j-live-proc.dtb>
+```
+
+构建报告和最终 `Guid.xref` 已确认 v15 实际进入 FV 的是通用运行时模块：
+
+```text
+EDK II: 0050 Images Verified
+镜像: C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-vendor-stock-v15-generic-runtime.img
+大小: 2199552 字节
+SHA256: FB9E299060C521BF7A62BB8E6B9A26BA981A5543878E5A2167A813A3487AC4FC
+Guid.xref: VariableRuntimeDxe, ResetSystemRuntimeDxe
+```
+
+手机实时检查显示 `320443959592 fastboot`，随后已执行一次临时启动：
+
+```text
+Sending 'boot.img' (2148 KB) OKAY
+Booting OKAY
+Finished. Total time: 10.161s
+```
+
+本次仍未执行 `fastboot flash`、擦除或任何分区写入。v15 实机照片仍停在 `Variable Arch Protocol not present!!`、`Variable Write Arch Protocol not present!!`、`Reset Arch Protocol not present!!` 后的 `ASSERT [DxeCore] DxeMain.c(581)`，因此通用运行时链没有解决问题。下一版改用 NX721J 原厂运行时对照，不再把 v15 的通用链当作最终方案。
+
+## v16：NX721J 原厂运行时与去除跨设备输入
+
+v16 的活动平台清单已移除所有 `Binaries/giulia` 和 `Binaries/nx729j` 引用，RAW 资源也不再打包 OnePlus 13R 面板/充电配置。硬件 DXE、UFS、USB 和运行时协议只使用 `Binaries/nx721j` 的输入；显示暂时使用官方 `SimpleFbDxe` 读取 ABL 已建立的帧缓冲。
+
+本版显式使用 `--nx721j-stock-runtime`，最终 `FVMAIN.inf` 中为：
+
+    Binaries/nx721j/.../VariableDxe/VariableDxe.inf
+    Binaries/nx721j/.../ResetRuntimeDxe/ResetRuntimeDxe.inf
+
+公共 DSC 的 `VariableRuntimeDxe`/`ResetSystemRuntimeDxe` 只出现在构建索引中，未进入本版 `FVMAIN`，所以不存在两套架构协议实现重复安装的问题。v16 本地构建已通过 EDK II `0050 Images Verified`。
+
+镜像：`C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-0.img`
+大小：`2007040` 字节
+SHA256：`F6834D3B925487BB7E76B333681529C98E37F20797C8E29F4BF9D8D4E99A0E74`
+
+本版尚未再次执行 `fastboot boot`；设备端验证仍需观察 DxeCore 断言是否消失，以及原厂 VariableDxe 是否能在 Z60U 的 QSEE/存储上下文中安装变量架构协议。没有执行永久刷写、擦除或分区写入。

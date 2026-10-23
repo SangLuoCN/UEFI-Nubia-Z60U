@@ -16,8 +16,6 @@ APRIORI DXE {
   INF Binaries/nx721j/QcomPkg/Drivers/SmemDxe/SmemDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/DALSYSDxe/DALSYSDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/HWIODxe/HWIODxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/ChipInfoDxe/ChipInfoDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/PlatformInfoDxe/PlatformInfoDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/HALIOMMUDxe/HALIOMMUDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/ULogDxe/ULogDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/IPCCDxe/IPCCDxe.inf
@@ -37,7 +35,7 @@ APRIORI DXE {
   INF Binaries/nx721j/QcomPkg/Drivers/I2CDxe/I2CDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/SPMIDxe/SPMIDxe.inf
 
-!if $(NX721J_VENDOR_HW) == 1
+!if $(NX721J_VENDOR_HW) == 1 && $(NX721J_STOCK_RUNTIME) == 1
   INF Binaries/nx721j/QcomPkg/Drivers/ResetRuntimeDxe/ResetRuntimeDxe.inf
 !else
   INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
@@ -49,24 +47,18 @@ APRIORI DXE {
 
   INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
 
-  INF Binaries/giulia/QcomPkg/Drivers/SdccDxe/SdccDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/UFSDxe/UFSDxe.inf
 
   INF FatPkg/EnhancedFatDxe/Fat.inf
 
   INF Binaries/nx721j/QcomPkg/Drivers/TzDxe/TzDxeLA.inf
 
-!if $(NX721J_VENDOR_HW) == 1
+!if $(NX721J_VENDOR_HW) == 1 && $(NX721J_STOCK_RUNTIME) == 1
   INF Binaries/nx721j/QcomPkg/Drivers/VariableDxe/VariableDxe.inf
 !else
   INF MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
 !endif
 
-  INF Binaries/giulia/QcomPkg/Drivers/DDRInfoDxe/DDRInfoDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/OcdtDxe/OplusProject.inf
-  INF Binaries/giulia/QcomPkg/Drivers/FeatureEnablerDxe/FeatureEnablerDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/PILProxyDxe/PILProxyDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/PILDxe/PILDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/GLinkDxe/GLinkDxe.inf
 
   INF MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
@@ -79,14 +71,11 @@ APRIORI DXE {
   INF MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
   INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
 
-  INF Binaries/giulia/QcomPkg/Drivers/SPIDxe/SPIDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/PmicGlinkDxe/PmicGlinkDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/UsbPwrCtrlDxe/UsbPwrCtrlDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/QcomChargerDxe/QcomChargerDxeLA.inf
   INF Binaries/nx721j/QcomPkg/Drivers/ChargerExDxe/ChargerExDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/UsbfnDwc3Dxe/UsbfnDwc3Dxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/XhciPciEmulationDxe/XhciPciEmulationDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/XhciDxe/XhciDxe.inf
 
   INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
@@ -95,22 +84,9 @@ APRIORI DXE {
   INF Binaries/nx721j/QcomPkg/Drivers/UsbMsdDxe/UsbMsdDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/UsbDeviceDxe/UsbDeviceDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/UsbConfigDxe/UsbConfigDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/ButtonsDxe/ButtonsDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/TsensDxe/TsensDxe.inf
 
-!if $(USE_CUSTOM_DISPLAY_DRIVER) == 1
-  INF Binaries/giulia/QcomPkg/Drivers/DisplayDxe/DisplayDxe.inf
-!else
   INF SiliciumPkg/Drivers/SimpleFbDxe/SimpleFbDxe.inf
-!endif
 
-  INF Binaries/giulia/QcomPkg/Drivers/LimitsDxe/LimitsDxe.inf
-!if $(USE_CUSTOM_DISPLAY_DRIVER) == 1
-  INF Binaries/giulia/QcomPkg/Drivers/CPRDxe/CPRDxe.inf
-!endif
-  INF Binaries/giulia/QcomPkg/Drivers/GpiDxe/GpiDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/UCDxe/UCDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/RNGDxe/RngDxe.inf
 
   INF EmbeddedPkg/SimpleTextInOutSerial/SimpleTextInOutSerial.inf
   INF MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
