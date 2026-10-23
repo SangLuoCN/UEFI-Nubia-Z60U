@@ -23,6 +23,7 @@ APRIORI DXE {
   INF Binaries/giulia/QcomPkg/Drivers/IPCCDxe/IPCCDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/Smp2pDxe/Smp2pDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/SSRDxe/SSRDxe.inf
+  INF Binaries/giulia/QcomPkg/Drivers/GLinkDxe/GLinkDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/CmdDbDxe/CmdDbDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/PwrUtilsDxe/PwrUtilsDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/NpaDxe/NpaDxe.inf

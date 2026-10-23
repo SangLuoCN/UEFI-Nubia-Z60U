@@ -243,3 +243,109 @@ SHA256：93d9ffbfc7c1bc65ea68fea6f329c2c2cc9632d6eaac670a91ac382138e26432
 ```
 
 该镜像仍使用临时 Android Boot v4 封装，不追加 giulia DTB，不执行 `fastboot flash`。下一步先让设备回到第一阶段 bootloader，再使用 `fastboot boot` 启动 v3，拍摄日志最底部，确认 `RpmhDxe` 之后是否进入 `UFSDxe` 和文件系统驱动。当前不能因为某个协议警告就删除对应驱动；应先确认它是否真正阻断了后续执行。
+
+## 2026 年 10 月 23 日 v3 循环日志修正
+
+用户说明屏幕日志为循环缓冲区，空白行上方的两行是最新输出。按此规则，`IMG20261023064346.jpg` 的最新尾部不是停在 `RpmhDxe`，而是：
+
+```text
+RpmhDxe.efi
+ULogDxe.efi
+VcsDxe.efi
+ClockDxe.efi
+```
+
+所以 v3 已经越过 `RpmhDxe`，当前候选停点是 `ClockDxe`。`SSRDxe` 的 `failed to locate QMI protocol` 发生在更早位置，但 `CmdDbDxe`、`PwrUtilsDxe`、`NpaDxe`、`RpmhDxe` 仍然继续，暂时不能把它当成致命错误。
+
+对照 Z60U 原厂报告和 sheng 的启动顺序，Z60U 的通信链应包含 `GlinkDxe`/`PmicGlinkDxe`。Ace5 的 giulia 配置排除 GLink 是设备特例，不能直接应用于 Z60U。已恢复 `GLinkDxe`，在 APRIORI 和 DXE 中放置于 `SSRDxe` 后、`CmdDbDxe` 前，作为 v4 的唯一功能变更；没有删除 Clock、Rpmh、UFS 或其他驱动。
+
+## 2026 年 10 月 23 日 v4 构建结果
+
+```text
+镜像：C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-vendor-stock-v4.img
+大小：1224704 字节
+SHA256：e746dfbcd3f832407645ec9608acd7222064858fab304852b189fd1cfdcc8084
+EDK II：0050 Images Verified
+```
+
+下一步用 v4 与 v3 比较循环日志最上方的最新行。如果 v4 越过 `ClockDxe`，可以确认 GLink/QMI 前置依赖方向正确；如果仍停在 Clock，再分析 Z60U Clock 的电源/时钟资源和 DCD 依赖行为。
+
+## 2026 年 10 月 23 日 修复 `spurious gic interrupt: 0x105`
+
+### 实机观察
+
+用户在完整厂商链启动时观察到屏幕持续刷屏：
+
+```text
+spurious gic interrupt: 0x105
+```
+
+这不是随机的 GIC 架构异常号。Z60U 的 TWRP 只读采集结果中，Linux `/proc/interrupts` 将十进制 261（十六进制 `0x105`）列为：
+
+```text
+GICv3 261 Level ipcc_0
+```
+
+因此它是 Qualcomm IPCC 的 level 中断源。当前 UEFI 已经加载 IPCC/GLink 相关模块，但该中断尚未注册可调用的 UEFI 处理程序；GIC 每次确认并结束中断后，IPCC 的电平仍保持有效，于是中断再次进入，形成无限循环并阻塞 DXE/BDS。
+
+### 修复方式
+
+本次没有删除 `IPCCDxe`、`GLinkDxe`、`Smp2pDxe`、`SSRDxe`、UFS 或 `RamManagerDxe`。参考 `Platforms/Xiaomi/shengPkg/PORTING.md` 和 `Resources/MuPatches/Gic-Spurious.patch` 的已验证处理方式，在 `ArmGicV3Dxe` 的“中断号没有注册处理程序”分支中：
+
+1. 保留原有错误日志；
+2. 调用 `GicV3DisableInterruptSource()` 屏蔽该中断源；
+3. 调用 `GicV3EndOfInterrupt()` 完成确认；
+4. 再读取中断使能状态，如果仍处于使能状态则输出无法屏蔽的诊断信息。
+
+这不是绕过驱动，而是对当前尚未接入 UEFI 协议处理程序的 level 中断进行必要的故障隔离。后续如果 IPCC/GLink 协议在 NX721J 上完成注册，正常处理程序路径仍然可以使用该中断。
+
+### 构建结果
+
+已将 `Gic-Spurious.patch` 纳入 `build_uefi.py` 的标准补丁应用和撤销列表，避免未来构建依赖手动修改 `Mu_Basecore`。使用 Python 3.12、工程 GNU Make、LLVM/LLD 执行：
+
+```text
+build_uefi.py -d nx721j -r DEBUG --nx721j-vendor-hw
+EDK II：0050 Images Verified
+PcdBuildXblHobs：1
+包含：ArmGicDxe、RamManagerDxe、IortDtDxe、完整 NX721J 厂商链
+```
+
+封装后的临时镜像：
+
+```text
+C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-vendor-stock-v6-gic-mask.img
+大小：1224704 字节
+SHA256：ddd1753e11754d5dacdeb366bbd24ef6b5cd37c5b4fd97a1086f2496837c3b69
+UEFI FD SHA256：a80cc48e1093538982bad0559a836387579d1b8db266f4754cf256a5a0204e21
+```
+
+镜像仍采用 Z60U 实机 Android Boot v4 头部，`ramdisk_size=0`、`signature_size=0`，载荷只包含 `BootShim + UEFI FD` 的 gzip 数据；没有拼接 DTB，也没有执行 `fastboot flash`、擦除或 userdata/GPT 修改。
+
+### 下一步验证
+
+手机当前已重新枚举为第一阶段 bootloader，`fastboot devices` 识别到：
+
+```text
+320443959592    fastboot
+```
+
+只执行临时启动：
+
+```powershell
+$fastboot = 'C:\Users\SangLuo\AppData\Local\Android\Sdk\platform-tools\fastboot.exe'
+& $fastboot boot 'C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-vendor-stock-v6-gic-mask.img'
+```
+
+验证重点是：`0x105` 只允许最多出现一次诊断后停止刷屏；随后继续观察是否进入 `ClockDxe`、UFS、BDS 或出现新的具体断言。若新的错误出现，应记录完整最新日志并修复对应协议/资源，不能因为错误出现就删除对应驱动。
+
+### v6 临时启动结果
+
+2026 年 10 月 23 日已执行上述 `fastboot boot`，主机端返回：
+
+```text
+Sending 'boot.img' (1196 KB) OKAY
+Booting OKAY
+Finished. Total time: 10.154s
+```
+
+等待 15 秒后设备没有重新枚举为 fastboot。这个主机端结果只能证明 ABL 接受并启动了镜像，不能替代手机屏幕日志判断 UEFI 的实际停点。

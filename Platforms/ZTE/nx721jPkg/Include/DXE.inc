@@ -82,8 +82,7 @@
   INF Binaries/giulia/QcomPkg/Drivers/IPCCDxe/IPCCDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/Smp2pDxe/Smp2pDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/SSRDxe/SSRDxe.inf
-  # Crashes
-  # INF Binaries/giulia/QcomPkg/Drivers/GLinkDxe/GLinkDxe.inf
+  INF Binaries/giulia/QcomPkg/Drivers/GLinkDxe/GLinkDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/OcdtDxe/OplusProject.inf
   INF Binaries/giulia/QcomPkg/Drivers/PmicGlinkDxe/PmicGlinkDxe.inf
   INF Binaries/giulia/QcomPkg/Drivers/QcomChargerDxe/QcomChargerDxeLA.inf
