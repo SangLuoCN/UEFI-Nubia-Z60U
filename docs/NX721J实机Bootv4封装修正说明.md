@@ -439,3 +439,57 @@ SHA256：E058507D81B239F0C8BC4014A2B1746491E5379BD17A3B0DE83FA5F28563B226
 ```
 
 从最终 FV 重新取出上述 9 个 PE32，去除 FFS section header 后逐项与 Z60U 原厂文件比较，全部相同。v10 尚未发送到实机；下一步只执行 `fastboot boot` 临时测试，不执行 `fastboot flash`、擦除、userdata 写入或 GPT 修改。测试时继续以屏幕最底部日志作为实际停点。
+
+## 2026 年 10 月 23 日 DxeCore 架构协议断言与 v11 原厂安全链
+
+### 实机判读修正
+
+v10 已经使用 `fastboot boot` 临时启动，ABL 返回 `Sending OKAY`、`Booting OKAY`，总耗时约 10.116 秒；没有执行永久刷写、擦除或分区写入。随后用户明确指出当前照片的最新停点为：
+
+```text
+Variable Arch Protocol not present!!
+Variable Write Arch Protocol not present!!
+Reset Arch Protocol not present!!
+ASSERT [DxeCore] DxeMain.c(581): !(((RETURN_STATUS)(Status)) >= 0x8000000000000000ULL)
+```
+
+`DxeMain.c(581)` 调用的是 `CoreAllEfiServicesAvailable()`。它发生在 DXE Dispatcher 完成一轮调度后，因此 `ASSERT [DxeCore]` 是三个架构协议未发布后的汇总结果，而不是应当被删除或忽略的独立驱动错误。
+
+### 原厂依赖证据
+
+对 Z60U 原厂 `uefi-outer-volume.bin` 的 APRIORI 和 PE32 字符串审计得到：
+
+```text
+VariableDxe: Varstore partition / UEFI Config Lib / Unable to locate QseeCom protocol
+TzDxeLA:     QseeComProtocolInit
+ResetRuntimeDxe: Error locating the cfg util protocol
+CfgUtilDxe:  ztecfg 读写与 CfgUtilDxe
+```
+
+此前工程中 `VariableDxe` 和 `ResetRuntimeDxe` 已切换为 NX721J 原厂 PE32，但其前置的 `ShmBridgeDxeLA`、`ScmDxeCompat`、`TzDxeLA` 仍来自 giulia，且完全缺少 ZTE 的 `VendorLogfsDxe`、`CfgUtilDxe`、`NubiaBoardDxe`。这会使原厂变量服务无法取得 QseeCom、配置和变量存储后端，因而无法发布 Variable/Reset 架构协议。
+
+### v11 构建结果
+
+已从 Z60U 原厂 FFS 提取并在 `Binaries/nx721j` 引用以下模块：
+
+```text
+ShmBridgeDxeLA
+ScmDxeCompat
+TzDxeLA
+RscDxe
+VendorLogfsDxe
+CfgUtilDxe
+NubiaBoardDxe
+```
+
+提取脚本已支持没有显式 DXE DEPEX section 的原厂 FFS。构建后的 FV 中，上述 7 个 PE32 与原厂文件逐项字节相同；`ShmBridgeDxeLA -> ScmDxeCompat -> TzDxeLA -> VariableDxe` 以及 `RscDxe -> VendorLogfsDxe -> CfgUtilDxe -> NubiaBoardDxe` 都已进入 APRIORI。
+
+```text
+命令：build_uefi.py -d nx721j -r DEBUG --nx721j-vendor-hw
+EDK II：0050 Images Verified
+镜像：C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-vendor-stock-v11-nx721j-qsee-varstore.img
+大小：2125824 字节
+SHA256：7358F2D48D83EBA2CA738729069D005D6DE70A10BB4B9EC006E8978B6410F8A2
+```
+
+v11 尚未发送到实机。下一次仅在第一阶段 bootloader 可见时执行 `fastboot boot` 临时启动，检查三个 `... Arch Protocol not present` 和 `ASSERT [DxeCore]` 是否消失；不执行 `fastboot flash`、擦除、userdata 写入或 GPT 修改。

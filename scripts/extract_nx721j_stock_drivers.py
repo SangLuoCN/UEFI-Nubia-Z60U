@@ -20,6 +20,7 @@ SECTION_HEADER_SIZE = 4
 class Driver:
     name: str
     guid: str
+    directory: str | None = None
 
 
 DRIVERS = (
@@ -36,14 +37,24 @@ DRIVERS = (
     Driver("I2CDxe", "04DE8591-D2B3-4077-BBBE-B12070094EB6"),
     Driver("ButtonsDxe", "5BD181DB-0487-4F1A-AE73-820E165611B3"),
     Driver("ChargerExDxe", "2E3042F3-2BB9-463F-8866-56D75B7C4AB0"),
-    Driver("RscDxe", "EA888DF7-D431-44AF-844C-7B29390F2758"),
     Driver("IPCCDxe", "42031F68-1F0B-429B-93F1-0EB0CF89DDBF"),
     Driver("Smp2pDxe", "23F4E10E-3050-4073-B94C-B80D7EBC959E"),
     Driver("SSRDxe", "6B593A13-4E39-4CF5-B4E2-50B9540A324A"),
     Driver("GLinkDxe", "7942A7EB-B7D5-4E2E-B908-831E4DE55B58"),
     Driver("PmicGlinkDxe", "6D4A9CF7-CC0C-42B0-AA89-F6A6A8D99273"),
+    Driver(
+        "ShmBridgeDxeLA",
+        "41EBB6A6-2C19-4C02-841D-848CE004A282",
+        "ShmBridgeDxe",
+    ),
+    Driver("ScmDxeCompat", "4B4973EE-401B-4F36-A6A9-533DFCCDFC33", "TzDxe"),
+    Driver("TzDxeLA", "CF6DFC66-14AB-4E13-84DB-9C02912D1404", "TzDxe"),
     Driver("VariableDxe", "2B0ECDCE-01AE-446E-9FFD-C4217DE0340F"),
     Driver("ResetRuntimeDxe", "3AE17DB7-3CC5-4B89-9304-9549211057EF"),
+    Driver("VendorLogfsDxe", "74BFFA36-92DC-4D44-BE1C-B31E37DD7733"),
+    Driver("CfgUtilDxe", "9399AEF4-FC3C-4C60-D213-9EB988D12F28"),
+    Driver("NubiaBoardDxe", "11CC956F-48B8-0F8C-78FC-218ED0821F3A"),
+    Driver("RscDxe", "EA888DF7-D431-44AF-844C-7B29390F2758"),
 )
 
 DEFAULT_DRIVER_NAMES = {
@@ -109,8 +120,11 @@ def extract_compressed_volume(data: bytes, ffs_offset: int) -> bytes:
     return gzip.decompress(compressed)
 
 
-def write_inf(output_dir: Path, driver: Driver) -> None:
+def write_inf(output_dir: Path, driver: Driver, has_depex: bool) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
+    depex_binary = (
+        f"  DXE_DEPEX|{driver.name}.depex|*\n" if has_depex else ""
+    )
     text = f"""[Defines]
   INF_VERSION                    = 0x0001001B
   BASE_NAME                      = {driver.name}
@@ -120,8 +134,7 @@ def write_inf(output_dir: Path, driver: Driver) -> None:
   ENTRY_POINT                    = EfiEntry
 
 [Binaries.AARCH64]
-  DXE_DEPEX|{driver.name}.depex|*
-  PE32|{driver.name}.efi|*
+{depex_binary}  PE32|{driver.name}.efi|*
 
 [Depex]
   TRUE
@@ -134,19 +147,18 @@ def extract_driver(data: bytes, output_root: Path, driver: Driver) -> dict[str, 
     ffs_size, sections = parse_sections(data, ffs_offset)
     if SECTION_PE32 not in sections:
         raise ValueError(f"{driver.name}: PE32 section not found")
-    if SECTION_DXE_DEPEX not in sections:
-        raise ValueError(f"{driver.name}: DXE_DEPEX section not found")
 
-    output_dir = output_root / driver.name
+    output_dir = output_root / (driver.directory or driver.name)
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / f"{driver.name}.efi").write_bytes(sections[SECTION_PE32])
-    (output_dir / f"{driver.name}.depex").write_bytes(sections[SECTION_DXE_DEPEX])
-    write_inf(output_dir, driver)
+    if SECTION_DXE_DEPEX in sections:
+        (output_dir / f"{driver.name}.depex").write_bytes(sections[SECTION_DXE_DEPEX])
+    write_inf(output_dir, driver, SECTION_DXE_DEPEX in sections)
     return {
         "ffs_offset": ffs_offset,
         "ffs_size": ffs_size,
         "pe32_size": len(sections[SECTION_PE32]),
-        "depex_size": len(sections[SECTION_DXE_DEPEX]),
+        "depex_size": len(sections.get(SECTION_DXE_DEPEX, b"")),
     }
 
 

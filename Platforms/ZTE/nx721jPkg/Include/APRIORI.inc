@@ -31,8 +31,8 @@ APRIORI DXE {
   INF Binaries/nx721j/QcomPkg/Drivers/VcsDxe/VcsDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/ClockDxe/ClockDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/ICBDxe/ICBDxe.inf
-  INF Binaries/giulia/QcomPkg/Drivers/ShmBridgeDxe/ShmBridgeDxeLA.inf
-  INF Binaries/giulia/QcomPkg/Drivers/TzDxe/ScmDxeCompat.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/ShmBridgeDxe/ShmBridgeDxeLA.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/TzDxe/ScmDxeCompat.inf
   INF Binaries/nx721j/QcomPkg/Drivers/TLMMDxe/TLMMDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/I2CDxe/I2CDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/SPMIDxe/SPMIDxe.inf
@@ -54,7 +54,7 @@ APRIORI DXE {
 
   INF FatPkg/EnhancedFatDxe/Fat.inf
 
-  INF Binaries/giulia/QcomPkg/Drivers/TzDxe/TzDxeLA.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/TzDxe/TzDxeLA.inf
 
 !if $(NX721J_VENDOR_HW) == 1
   INF Binaries/nx721j/QcomPkg/Drivers/VariableDxe/VariableDxe.inf
@@ -117,5 +117,8 @@ APRIORI DXE {
   INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
   INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
 
-  INF Binaries/giulia/QcomPkg/Drivers/RscDxe/RscDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/RscDxe/RscDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/VendorLogfsDxe/VendorLogfsDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/CfgUtilDxe/CfgUtilDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/NubiaBoardDxe/NubiaBoardDxe.inf
 }

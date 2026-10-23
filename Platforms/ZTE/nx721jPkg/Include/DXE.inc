@@ -9,9 +9,9 @@
   INF MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
   INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
 
-  INF Binaries/giulia/QcomPkg/Drivers/ShmBridgeDxe/ShmBridgeDxeLA.inf
-  INF Binaries/giulia/QcomPkg/Drivers/TzDxe/ScmDxeCompat.inf
-  INF Binaries/giulia/QcomPkg/Drivers/TzDxe/TzDxeLA.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/ShmBridgeDxe/ShmBridgeDxeLA.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/TzDxe/ScmDxeCompat.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/TzDxe/TzDxeLA.inf
 
   INF MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
   INF MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
@@ -62,7 +62,10 @@
 
   INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
 
-  INF Binaries/giulia/QcomPkg/Drivers/RscDxe/RscDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/RscDxe/RscDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/VendorLogfsDxe/VendorLogfsDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/CfgUtilDxe/CfgUtilDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/NubiaBoardDxe/NubiaBoardDxe.inf
 
   INF EmbeddedPkg/SimpleTextInOutSerial/SimpleTextInOutSerial.inf
   INF MdeModulePkg/Universal/PrintDxe/PrintDxe.inf
