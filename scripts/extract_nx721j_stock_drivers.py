@@ -24,6 +24,11 @@ class Driver:
 
 
 DRIVERS = (
+    # These providers live in the stock Z60U inner FV.  They are required by
+    # the NX721J Clock/SMBIOS dependency chain and must not come from another
+    # Qualcomm device.
+    Driver("CPRDxe", "1B52138D-3FA3-4E50-B958-20887353F809"),
+    Driver("DDRInfoDxe", "7DB0793A-4402-4BE1-906E-D0FABAD2707E"),
     Driver("UsbInitDxe", "0A134F0E-075E-40B3-9C63-3B3906804663"),
     Driver("UsbMsdDxe", "5AF77F10-90DF-4E7E-8325-A17EC09D5443"),
     Driver("PmicDxe", "5776232E-082D-4B75-9A0E-FE1D13F7A5D9"),
@@ -95,7 +100,10 @@ def find_ffs(data: bytes, guid: str) -> int:
             size = int.from_bytes(data[offset + 20 : offset + 23], "little")
             file_type = data[offset + 18]
             state = data[offset + 23]
-            if 24 <= size <= len(data) - offset and file_type in range(1, 8) and state != 0:
+            # All selected stock inputs are DXE driver FFS files.  Requiring
+            # the DXE file type avoids matching the same GUID inside a PE32
+            # payload or a nested volume's unrelated bytes.
+            if 24 <= size <= len(data) - offset and file_type == 0x07 and state != 0:
                 return offset
         cursor = offset + 1
 

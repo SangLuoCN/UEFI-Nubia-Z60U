@@ -16,6 +16,7 @@ APRIORI DXE {
   INF Binaries/nx721j/QcomPkg/Drivers/SmemDxe/SmemDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/DALSYSDxe/DALSYSDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/HWIODxe/HWIODxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/CPRDxe/CPRDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/ChipInfoDxe/ChipInfoDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/PlatformInfoDxe/PlatformInfoDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/HALIOMMUDxe/HALIOMMUDxe.inf
@@ -31,6 +32,7 @@ APRIORI DXE {
   INF Binaries/nx721j/QcomPkg/Drivers/VcsDxe/VcsDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/ClockDxe/ClockDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/ICBDxe/ICBDxe.inf
+  INF Binaries/nx721j/QcomPkg/Drivers/DDRInfoDxe/DDRInfoDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/ShmBridgeDxe/ShmBridgeDxeLA.inf
   INF Binaries/nx721j/QcomPkg/Drivers/TzDxe/ScmDxeCompat.inf
   INF Binaries/nx721j/QcomPkg/Drivers/TLMMDxe/TLMMDxe.inf
