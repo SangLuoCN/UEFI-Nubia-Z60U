@@ -395,3 +395,47 @@ SHA256：E2FD316A00066814F929E048FF3617D5196A6B462341C0268E67FF234CE269AF
 ```
 
 主机端当前 `fastboot devices` 为空，因此 v9 尚未发送到实机；没有执行 `fastboot flash`、擦除、userdata 写入或 GPT 修改。下一次手机重新进入第一阶段 bootloader 后，只执行 `fastboot boot`，重点观察 `0x105` 中断循环是否消失，以及 `Variable Arch Protocol`、`Reset Arch Protocol` 和后续 UFS/BDS 停点是否改变。
+
+## 2026 年 10 月 23 日 切换 Z60U 原厂 USB 与充电驱动
+
+### v9 实机停点校正
+
+用户确认循环日志的判读方式：本次照片中屏幕最底部是实际停点。`IMG20261023160619.jpg` 的实际停点为：
+
+```text
+UsbConfigLib_pmic_npa_create_sync_client: ... failed to locate PMIC version protocol
+...
+UsbConfigLibPortQueryConnectionChange: GetTypeCPortStatus returned ERROR (0x3), switching platform to UNKNOWN on port: 0
+```
+
+这表示 v9 已经越过 `ButtonsDxe`、`RamManagerDxe`、内存映射、SMBIOS、SetupBrowser 以及后续驱动；照片中间的 `Variable Arch Protocol`、`Reset Arch Protocol` 行不是本轮最终停点。此前的 `spurious gic interrupt: 0x105` 也没有继续刷屏。
+
+### 原厂对照
+
+对照 Z60U 原厂 GUID 清单并从原厂 FFS 提取 PE32/DEPEX 后，确认以下 USB/充电模块不能继续引用 giulia 文件：
+
+```text
+UsbConfigDxe
+UsbPwrCtrlDxe
+QcomChargerDxeLA
+UsbDeviceDxe
+UsbfnDwc3Dxe
+I2CDxe
+ChargerExDxe
+UsbInitDxe
+UsbMsdDxe
+```
+
+这些模块的原厂 PE32 与当前 giulia 文件哈希均不同。已将原厂文件放入 `Binaries/nx721j`，并只在 `APRIORI.inc`/`DXE.inc` 中切换平台引用；旧 giulia 文件保留，不通过删除文件规避问题。
+
+### v10 构建结果
+
+```text
+命令：build_uefi.py -d nx721j -r DEBUG --nx721j-vendor-hw
+EDK II：0050 Images Verified
+镜像：C:\Users\SangLuo\Desktop\Projects\uefi-z60u\Mu-nx721j-vendor-stock-v10-nx721j-usb-drivers.img
+大小：2117632 字节
+SHA256：E058507D81B239F0C8BC4014A2B1746491E5379BD17A3B0DE83FA5F28563B226
+```
+
+从最终 FV 重新取出上述 9 个 PE32，去除 FFS section header 后逐项与 Z60U 原厂文件比较，全部相同。v10 尚未发送到实机；下一步只执行 `fastboot boot` 临时测试，不执行 `fastboot flash`、擦除、userdata 写入或 GPT 修改。测试时继续以屏幕最底部日志作为实际停点。
