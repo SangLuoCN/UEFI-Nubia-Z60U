@@ -13,6 +13,25 @@ APRIORI DXE {
   INF EmbeddedPkg/MetronomeDxe/MetronomeDxe.inf
   INF ArmPkg/Drivers/TimerDxe/TimerDxe.inf
 
+  # Keep the architectural runtime providers ahead of the NX721J vendor chain.
+  # This follows the official/Ace5 platform ordering, but uses the selected
+  # NX721J runtime implementation below and does not import Ace5 binaries.
+  INF MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
+  INF MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
+!if $(NX721J_VENDOR_HW) == 1 && $(NX721J_STOCK_RUNTIME) == 1
+  INF Binaries/nx721j/QcomPkg/Drivers/VariableDxe/VariableDxe.inf
+!else
+  INF MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
+!endif
+  INF EmbeddedPkg/EmbeddedMonotonicCounter/EmbeddedMonotonicCounter.inf
+!if $(NX721J_VENDOR_HW) == 1 && $(NX721J_STOCK_RUNTIME) == 1
+  INF Binaries/nx721j/QcomPkg/Drivers/ResetRuntimeDxe/ResetRuntimeDxe.inf
+!else
+  INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
+!endif
+  INF EmbeddedPkg/RealTimeClockRuntimeDxe/RealTimeClockRuntimeDxe.inf
+  INF MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
+
   INF Binaries/nx721j/QcomPkg/Drivers/SmemDxe/SmemDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/DALSYSDxe/DALSYSDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/HWIODxe/HWIODxe.inf
@@ -39,12 +58,6 @@ APRIORI DXE {
   INF Binaries/nx721j/QcomPkg/Drivers/I2CDxe/I2CDxe.inf
   INF Binaries/nx721j/QcomPkg/Drivers/SPMIDxe/SPMIDxe.inf
 
-!if $(NX721J_VENDOR_HW) == 1 && $(NX721J_STOCK_RUNTIME) == 1
-  INF Binaries/nx721j/QcomPkg/Drivers/ResetRuntimeDxe/ResetRuntimeDxe.inf
-!else
-  INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
-!endif
-
   INF Binaries/nx721j/QcomPkg/Drivers/PmicDxe/PmicDxeLa.inf
   INF Binaries/nx721j/MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   INF Binaries/nx721j/MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
@@ -57,22 +70,11 @@ APRIORI DXE {
 
   INF Binaries/nx721j/QcomPkg/Drivers/TzDxe/TzDxeLA.inf
 
-!if $(NX721J_VENDOR_HW) == 1 && $(NX721J_STOCK_RUNTIME) == 1
-  INF Binaries/nx721j/QcomPkg/Drivers/VariableDxe/VariableDxe.inf
-!else
-  INF MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
-!endif
-
   INF Binaries/nx721j/QcomPkg/Drivers/GLinkDxe/GLinkDxe.inf
 
-  INF MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
   INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
-  INF EmbeddedPkg/EmbeddedMonotonicCounter/EmbeddedMonotonicCounter.inf
-  INF EmbeddedPkg/RealTimeClockRuntimeDxe/RealTimeClockRuntimeDxe.inf
   INF MdeModulePkg/Universal/PrintDxe/PrintDxe.inf
   INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
-  INF MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
-  INF MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
   INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
 
   INF Binaries/nx721j/QcomPkg/Drivers/PmicGlinkDxe/PmicGlinkDxe.inf

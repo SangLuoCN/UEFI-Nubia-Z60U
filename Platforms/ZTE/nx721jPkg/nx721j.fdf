@@ -122,6 +122,12 @@ READ_LOCK_STATUS   = TRUE
 
   !include QcomPkg/Extra.fdf.inc
 
+  # Official UniXNU menu, firmware registrar and Darwin loader.
+  # Device-specific payloads and DT/ADT remain outside this firmware FV.
+  INF UniXNUPkg/Application/UniXNU/UniXNU.inf
+  INF UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
+  INF DarwinBootPkg/Driver/DarwinBoot.inf
+
 [FV.FVMAIN_COMPACT]
 FvAlignment        = 8
 ERASE_POLARITY     = 1

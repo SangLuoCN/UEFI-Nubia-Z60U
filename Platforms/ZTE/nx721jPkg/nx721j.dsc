@@ -55,6 +55,13 @@
 !include LanaiPkg/LanaiPkg.dsc.inc
 
 [PcdsFixedAtBuild]
+!if $(NX721J_STOCK_RUNTIME) == 0
+  # Generic VariableRuntimeDxe has no NX721J FVB in temporary bring-up
+  # images. Use a RAM-backed variable store until the stock storage path is
+  # proven; the NX721J stock VariableDxe path keeps its original behavior.
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable|TRUE
+!endif
+
   #
   # DDR Memory
   #
@@ -95,6 +102,9 @@
 !endif
 
 [LibraryClasses]
+  UniXNULib|UniXNUPkg/Library/UniXNULib/UniXNULib.inf
+  FdtLib|MdePkg/Library/BaseFdtLib/BaseFdtLib.inf
+
   #
   # Memory Libraries
   #
@@ -108,6 +118,12 @@
 [Components]
   # Stage 1 proof driver.  The FDF APRIORI/DXE lists control dispatch order.
   nx721jPkg/Drivers/Nx721jStage1Dxe/Nx721jStage1Dxe.inf
+
+  # Official UniXNU firmware integration.  These are public boot-layer
+  # components; no Ace5/giulia hardware binaries are used here.
+  UniXNUPkg/Application/UniXNU/UniXNU.inf
+  UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
+  DarwinBootPkg/Driver/DarwinBoot.inf
 
   #
   # ACPI Tables

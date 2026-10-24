@@ -30,6 +30,8 @@ class CommonPlatform ():
     Scopes = ('nx721j', 'gcc_aarch64_linux', 'edk2-build')
     WorkspaceRoot = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     PackagesPath = (
+        os.path.join(os.environ.get("UNIXNU_ROOT", os.path.join(WorkspaceRoot, "..", "UniXNU")), "package"),
+        os.path.join(os.environ.get("UNIXNU_ROOT", os.path.join(WorkspaceRoot, "..", "UniXNU")), "drivers", "DarwinBoot"),
         "Platforms/ZTE",
         "Common/Mu",
         "Common/Mu_OEM_Sample",
