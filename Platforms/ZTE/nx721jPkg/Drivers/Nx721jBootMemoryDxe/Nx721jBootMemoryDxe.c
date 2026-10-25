@@ -333,7 +333,7 @@ PublishRamdisk (
   Chosen = FdtPathOffset (Fdt, "/chosen");
   if (Chosen < 0) {
     DEBUG ((DEBUG_ERROR, "NX721JMEM: /chosen is missing\n"));
-    return EFI_NOT_FOUND;
+    goto ScanKernelReservation;
   }
 
   StartProp = FdtGetProp (Fdt, Chosen, "linux,initrd-start", &StartLength);
@@ -343,7 +343,7 @@ PublishRamdisk (
        ((EndLength != sizeof (UINT32)) && (EndLength != sizeof (UINT64)))))
   {
     DEBUG ((DEBUG_ERROR, "NX721JMEM: ABL did not provide an initrd range\n"));
-    return EFI_NOT_FOUND;
+    goto ScanKernelReservation;
   }
 
   Start = ReadCells (StartProp, StartLength / sizeof (UINT32));
@@ -371,6 +371,7 @@ PublishRamdisk (
   // The NX721J MemoryMapLib reserves this whole window for the Android
   // kernel/ramdisk handoff.  Search only that board-proven reservation; do
   // not scan arbitrary RAM or copy Ace5's Giulia address window.
+ScanKernelReservation:
   Status = ScanRamdiskRange (
              NX721J_KERNEL_RAMDISK_START,
              NX721J_KERNEL_RAMDISK_END,
