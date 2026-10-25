@@ -27,8 +27,15 @@
 #include <Protocol/DiskIo.h>
 #include <Protocol/SimpleFileSystem.h>
 
+#include "Nx721jPayloadIdentity.h"
+
 #define NX721J_RAMDISK_BLOCK_SIZE  512
-#define NX721J_RAMDISK_DIAGNOSTIC_VERSION  25
+#define NX721J_RAMDISK_DIAGNOSTIC_VERSION  26
+
+// This is the NX721J Kernel reservation from MemoryMapLib, not an Ace5 range.
+// The ABL DTB initrd range observed on the phone is stale and much smaller.
+#define NX721J_KERNEL_RAMDISK_START  0xA8000000ULL
+#define NX721J_KERNEL_RAMDISK_END    0xB8000000ULL
 
 #pragma pack(1)
 typedef struct {
@@ -152,6 +159,134 @@ STATIC
 VOID
 LogFilesystemState (
   IN EFI_HANDLE  Handle
+  );
+
+STATIC
+BOOLEAN
+IsPayloadAt (
+  IN  UINT8  *Base,
+  IN  UINT64 AvailableBytes,
+  OUT UINT64 *PayloadBytes
+  )
+{
+  UINT32  Crc;
+  UINT64  Bytes;
+
+  if ((Base == NULL) || (PayloadBytes == NULL) ||
+      (AvailableBytes < NX721J_PAYLOAD_BYTES)) {
+    return FALSE;
+  }
+
+  if ((Base[510] != 0x55) || (Base[511] != 0xAA) ||
+      (ReadUnaligned16 ((CONST UINT16 *)(Base + 11)) != NX721J_RAMDISK_BLOCK_SIZE) ||
+      (CompareMem (Base + 82, "FAT32   ", 8) != 0) ||
+      (CompareMem (Base + 71, NX721J_PAYLOAD_FAT_LABEL, 11) != 0)) {
+    return FALSE;
+  }
+
+  Bytes = (UINT64)ReadUnaligned32 ((CONST UINT32 *)(Base + 32)) *
+          NX721J_RAMDISK_BLOCK_SIZE;
+  if ((Bytes != NX721J_PAYLOAD_BYTES) || (Bytes > AvailableBytes)) {
+    return FALSE;
+  }
+
+  if (EFI_ERROR (gBS->CalculateCrc32 (Base, (UINTN)Bytes, &Crc)) ||
+      (Crc != NX721J_PAYLOAD_CRC32)) {
+    return FALSE;
+  }
+
+  *PayloadBytes = Bytes;
+  return TRUE;
+}
+
+STATIC
+EFI_STATUS
+InstallRamdisk (
+  IN UINT64 Start,
+  IN UINT64 PayloadBytes
+  )
+{
+  EFI_STATUS  Status;
+  EFI_STATUS  ConnectStatus;
+  EFI_HANDLE  Handle;
+
+  if ((Start > MAX_UINT64 - PayloadBytes) ||
+      (PayloadBytes == 0) || ((PayloadBytes % NX721J_RAMDISK_BLOCK_SIZE) != 0)) {
+    return EFI_COMPROMISED_DATA;
+  }
+
+  mRamdiskBase            = (UINT8 *)(UINTN)Start;
+  mMedia.MediaId          = 1;
+  mMedia.RemovableMedia   = FALSE;
+  mMedia.MediaPresent     = TRUE;
+  mMedia.LogicalPartition = FALSE;
+  mMedia.ReadOnly         = TRUE;
+  mMedia.WriteCaching     = FALSE;
+  mMedia.BlockSize        = NX721J_RAMDISK_BLOCK_SIZE;
+  mMedia.IoAlign          = 1;
+  mMedia.LastBlock        = PayloadBytes / NX721J_RAMDISK_BLOCK_SIZE - 1;
+
+  Handle = NULL;
+  Status = gBS->InstallMultipleProtocolInterfaces (
+                  &Handle,
+                  &gEfiDevicePathProtocolGuid,
+                  &mRamdiskDevicePath,
+                  &gEfiBlockIoProtocolGuid,
+                  &mBlockIo,
+                  NULL
+                  );
+  DEBUG ((
+    DEBUG_ERROR,
+    "NX721JMEM: payload at 0x%lx size 0x%lx, Block I/O (%r)\n",
+    Start,
+    PayloadBytes,
+    Status
+    ));
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  // The handle is created after the normal DXE dispatch pass.  Connect the
+  // official DiskIo/Partition/Fat stack explicitly before UniXNU starts.
+  ConnectStatus = gBS->ConnectController (Handle, NULL, NULL, TRUE);
+  DEBUG ((DEBUG_ERROR, "NX721JMEM: connect ramdisk stack (%r)\n", ConnectStatus));
+  LogFilesystemState (Handle);
+  return Status;
+}
+
+STATIC
+EFI_STATUS
+ScanRamdiskRange (
+  IN UINT64 Start,
+  IN UINT64 End,
+  IN UINT32 Stage
+  )
+{
+  UINT64  At;
+  UINT64  PayloadBytes;
+
+  if ((End <= Start) || ((End - Start) < NX721J_PAYLOAD_BYTES)) {
+    return EFI_NOT_FOUND;
+  }
+
+  Start = ALIGN_VALUE (Start, NX721J_RAMDISK_BLOCK_SIZE);
+  DEBUG ((DEBUG_ERROR, "NX721JMEM: v%u scan 0x%lx-0x%lx\n", Stage, Start, End));
+  for (At = Start; At <= End - NX721J_PAYLOAD_BYTES; At += NX721J_RAMDISK_BLOCK_SIZE) {
+    if (!IsPayloadAt ((UINT8 *)(UINTN)At, End - At, &PayloadBytes)) {
+      continue;
+    }
+
+    DEBUG ((DEBUG_ERROR, "NX721JMEM: v%u matched NX721J FAT at 0x%lx\n", Stage, At));
+    return InstallRamdisk (At, PayloadBytes);
+  }
+
+  return EFI_NOT_FOUND;
+}
+
+STATIC
+VOID
+LogFilesystemState (
+  IN EFI_HANDLE  Handle
   )
 {
   EFI_STATUS  Status;
@@ -186,16 +321,14 @@ PublishRamdisk (
   IN CONST VOID  *Fdt
   )
 {
-  EFI_STATUS   Status;
-  EFI_STATUS   ConnectStatus;
-  INT32        Chosen;
-  INT32        StartLength;
-  INT32        EndLength;
-  CONST VOID   *StartProp;
-  CONST VOID   *EndProp;
-  UINT64       Start;
-  UINT64       End;
-  EFI_HANDLE   Handle;
+  EFI_STATUS    Status;
+  INT32         Chosen;
+  INT32         StartLength;
+  INT32         EndLength;
+  CONST VOID    *StartProp;
+  CONST VOID    *EndProp;
+  UINT64        Start;
+  UINT64        End;
 
   Chosen = FdtPathOffset (Fdt, "/chosen");
   if (Chosen < 0) {
@@ -215,56 +348,37 @@ PublishRamdisk (
 
   Start = ReadCells (StartProp, StartLength / sizeof (UINT32));
   End   = ReadCells (EndProp, EndLength / sizeof (UINT32));
-  if ((End <= Start) || (((End - Start) % NX721J_RAMDISK_BLOCK_SIZE) != 0)) {
-    DEBUG ((DEBUG_ERROR, "NX721JMEM: invalid initrd range 0x%lx-0x%lx\n", Start, End));
-    return EFI_COMPROMISED_DATA;
+  DEBUG ((DEBUG_ERROR, "NX721JMEM: ABL initrd range 0x%lx-0x%lx\n", Start, End));
+
+  // The phone's ABL range is not authoritative for this v4 payload.  Accept
+  // it only when it is inside NX721J's Kernel reservation and large enough to
+  // contain the complete, CRC-checked FAT image.
+  if ((Start >= NX721J_KERNEL_RAMDISK_START) &&
+      (End <= NX721J_KERNEL_RAMDISK_END) &&
+      (End > Start) && ((End - Start) >= NX721J_PAYLOAD_BYTES)) {
+    Status = ScanRamdiskRange (Start, End, 1);
+    if (Status != EFI_NOT_FOUND) {
+      return Status;
+    }
+  } else {
+    DEBUG ((
+      DEBUG_ERROR,
+      "NX721JMEM: ABL range is stale/short; expected 0x%lx bytes in Kernel reservation\n",
+      NX721J_PAYLOAD_BYTES
+      ));
   }
 
-  mRamdiskBase              = (UINT8 *)(UINTN)Start;
-  mMedia.MediaId            = 1;
-  mMedia.RemovableMedia     = FALSE;
-  mMedia.MediaPresent       = TRUE;
-  mMedia.LogicalPartition   = FALSE;
-  mMedia.ReadOnly           = TRUE;
-  mMedia.WriteCaching       = FALSE;
-  mMedia.BlockSize          = NX721J_RAMDISK_BLOCK_SIZE;
-  mMedia.IoAlign            = 1;
-  mMedia.LastBlock          = (End - Start) / NX721J_RAMDISK_BLOCK_SIZE - 1;
-
-  DEBUG ((
-    DEBUG_ERROR,
-    "NX721JMEM: v%u FAT probe bytes %02x %02x %02x %02x sig %02x %02x sectors %lu\n",
-    NX721J_RAMDISK_DIAGNOSTIC_VERSION,
-    mRamdiskBase[0],
-    mRamdiskBase[1],
-    mRamdiskBase[2],
-    mRamdiskBase[3],
-    mRamdiskBase[510],
-    mRamdiskBase[511],
-    (UINT64)(mMedia.LastBlock + 1)
-    ));
-
-  Handle = NULL;
-  Status = gBS->InstallMultipleProtocolInterfaces (
-                  &Handle,
-                  &gEfiDevicePathProtocolGuid,
-                  &mRamdiskDevicePath,
-                  &gEfiBlockIoProtocolGuid,
-                  &mBlockIo,
-                  NULL
-                  );
-  DEBUG ((DEBUG_ERROR, "NX721JMEM: ramdisk Block I/O 0x%lx-0x%lx (%r)\n", Start, End, Status));
-  if (!EFI_ERROR (Status)) {
-    //
-    // This handle is created after the normal DXE dispatch pass.  NX721J's
-    // BDS path does not call ConnectAll before starting UniXNU, so explicitly
-    // connect DiskIo/Partition/Fat to publish SimpleFileSystem now.
-    //
-    ConnectStatus = gBS->ConnectController (Handle, NULL, NULL, TRUE);
-    DEBUG ((DEBUG_ERROR, "NX721JMEM: connect ramdisk stack (%r)\n", ConnectStatus));
-    LogFilesystemState (Handle);
+  // The NX721J MemoryMapLib reserves this whole window for the Android
+  // kernel/ramdisk handoff.  Search only that board-proven reservation; do
+  // not scan arbitrary RAM or copy Ace5's Giulia address window.
+  Status = ScanRamdiskRange (
+             NX721J_KERNEL_RAMDISK_START,
+             NX721J_KERNEL_RAMDISK_END,
+             2
+             );
+  if (Status == EFI_NOT_FOUND) {
+    DEBUG ((DEBUG_ERROR, "NX721JMEM: no complete NX721J FAT payload found\n"));
   }
-
   return Status;
 }
 

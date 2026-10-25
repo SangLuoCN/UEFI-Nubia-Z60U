@@ -8,6 +8,7 @@
 
 [Sources]
   Nx721jBootMemoryDxe.c
+  Nx721jPayloadIdentity.h
 
 [Packages]
   MdePkg/MdePkg.dec

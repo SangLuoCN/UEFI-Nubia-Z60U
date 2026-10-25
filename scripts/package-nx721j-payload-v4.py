@@ -109,8 +109,20 @@ def build(base: Path, payload: Path, bootshim: Path, fd: Path, dtb: Path, output
 
     if not payload_data:
         raise ValueError("payload is empty")
+    payload_crc32 = zlib.crc32(payload_data) & 0xFFFFFFFF
     parsed = parse_image(base_data)
     kernel_report = verify_kernel(parsed["kernel"], bootshim_data, fd_data, dtb_data)
+
+    if payload_data[510:512] != b"\x55\xaa":
+        raise ValueError("payload is not an MBR/FAT image")
+    if payload_data[82:90] != b"FAT32   ":
+        raise ValueError("payload is not FAT32")
+    if payload_data[71:82] != b"NX721J     ":
+        raise ValueError("payload FAT label is not NX721J")
+    if struct.unpack_from("<H", payload_data, 11)[0] != 512:
+        raise ValueError("payload sector size is not 512 bytes")
+    if struct.unpack_from("<I", payload_data, 32)[0] * 512 != len(payload_data):
+        raise ValueError("payload FAT size does not match the image")
 
     header = bytearray(base_data[:V4_HEADER_SIZE])
     struct.pack_into("<I", header, V4_RAMDISK_SIZE_OFFSET, len(payload_data))
@@ -140,6 +152,8 @@ def build(base: Path, payload: Path, bootshim: Path, fd: Path, dtb: Path, output
         "kernel_sha256": sha256(rebuilt["kernel"]),
         "ramdisk_bytes": rebuilt["ramdisk_size"],
         "ramdisk_sha256": sha256(payload_data),
+        "ramdisk_crc32": f"{payload_crc32:08x}",
+        "ramdisk_fat_label": payload_data[71:82].decode("ascii"),
         "signature_bytes": rebuilt["signature_size"],
         "signature_sha256": sha256(rebuilt["old_signature"]),
         "hardware_tested": False,
