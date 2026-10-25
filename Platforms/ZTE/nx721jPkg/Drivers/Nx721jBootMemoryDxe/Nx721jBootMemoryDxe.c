@@ -18,13 +18,17 @@
 #include <Library/DebugLib.h>
 #include <Library/FdtLib.h>
 #include <Library/HobLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiDriverEntryPoint.h>
 
 #include <Protocol/BlockIo.h>
 #include <Protocol/DevicePath.h>
+#include <Protocol/DiskIo.h>
+#include <Protocol/SimpleFileSystem.h>
 
 #define NX721J_RAMDISK_BLOCK_SIZE  512
+#define NX721J_RAMDISK_DIAGNOSTIC_VERSION  25
 
 #pragma pack(1)
 typedef struct {
@@ -145,6 +149,38 @@ STATIC EFI_BLOCK_IO_PROTOCOL  mBlockIo = {
 };
 
 STATIC
+VOID
+LogFilesystemState (
+  IN EFI_HANDLE  Handle
+  )
+{
+  EFI_STATUS  Status;
+  VOID        *Protocol;
+  EFI_HANDLE  *Handles;
+  UINTN       Count;
+
+  Status = gBS->HandleProtocol (Handle, &gEfiDiskIoProtocolGuid, &Protocol);
+  DEBUG ((DEBUG_ERROR, "NX721JMEM: DiskIo on ramdisk handle (%r)\n", Status));
+
+  Status = gBS->HandleProtocol (Handle, &gEfiSimpleFileSystemProtocolGuid, &Protocol);
+  DEBUG ((DEBUG_ERROR, "NX721JMEM: SimpleFileSystem on ramdisk handle (%r)\n", Status));
+
+  Handles = NULL;
+  Count   = 0;
+  Status  = gBS->LocateHandleBuffer (
+                              ByProtocol,
+                              &gEfiSimpleFileSystemProtocolGuid,
+                              NULL,
+                              &Count,
+                              &Handles
+                              );
+  DEBUG ((DEBUG_ERROR, "NX721JMEM: global SimpleFileSystem handles %u (%r)\n", (UINT32)Count, Status));
+  if (Handles != NULL) {
+    FreePool (Handles);
+  }
+}
+
+STATIC
 EFI_STATUS
 PublishRamdisk (
   IN CONST VOID  *Fdt
@@ -195,6 +231,19 @@ PublishRamdisk (
   mMedia.IoAlign            = 1;
   mMedia.LastBlock          = (End - Start) / NX721J_RAMDISK_BLOCK_SIZE - 1;
 
+  DEBUG ((
+    DEBUG_ERROR,
+    "NX721JMEM: v%u FAT probe bytes %02x %02x %02x %02x sig %02x %02x sectors %lu\n",
+    NX721J_RAMDISK_DIAGNOSTIC_VERSION,
+    mRamdiskBase[0],
+    mRamdiskBase[1],
+    mRamdiskBase[2],
+    mRamdiskBase[3],
+    mRamdiskBase[510],
+    mRamdiskBase[511],
+    (UINT64)(mMedia.LastBlock + 1)
+    ));
+
   Handle = NULL;
   Status = gBS->InstallMultipleProtocolInterfaces (
                   &Handle,
@@ -213,6 +262,7 @@ PublishRamdisk (
     //
     ConnectStatus = gBS->ConnectController (Handle, NULL, NULL, TRUE);
     DEBUG ((DEBUG_ERROR, "NX721JMEM: connect ramdisk stack (%r)\n", ConnectStatus));
+    LogFilesystemState (Handle);
   }
 
   return Status;
@@ -240,6 +290,7 @@ Nx721jBootMemoryDxeEntry (
     return EFI_SUCCESS;
   }
 
+  DEBUG ((DEBUG_ERROR, "NX721JMEM: diagnostic v%u entry\n", NX721J_RAMDISK_DIAGNOSTIC_VERSION));
   DEBUG ((DEBUG_ERROR, "NX721JMEM: DTB 0x%lx, %u bytes\n", Dtb, (UINT32)FdtTotalSize ((VOID *)(UINTN)Dtb)));
   PublishRamdisk ((VOID *)(UINTN)Dtb);
   return EFI_SUCCESS;
