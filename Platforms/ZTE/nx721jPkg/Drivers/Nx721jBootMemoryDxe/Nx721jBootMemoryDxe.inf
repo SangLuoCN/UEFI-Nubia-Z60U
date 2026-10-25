@@ -1,0 +1,34 @@
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = Nx721jBootMemoryDxe
+  FILE_GUID                      = 9E4A3B1D-7F8A-4B36-9D25-6C8F2A1E40B7
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = Nx721jBootMemoryDxeEntry
+
+[Sources]
+  Nx721jBootMemoryDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SiliciumPkg/SiliciumPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  FdtLib
+  HobLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+
+[Guids]
+  gSiliciumEntryArgHobGuid                      ## CONSUMES
+
+[Protocols]
+  gEfiBlockIoProtocolGuid                       ## PRODUCES
+  gEfiDevicePathProtocolGuid                    ## PRODUCES
+
+[Depex]
+  TRUE

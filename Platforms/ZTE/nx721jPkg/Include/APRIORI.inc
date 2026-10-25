@@ -75,6 +75,11 @@ APRIORI DXE {
   INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
   INF MdeModulePkg/Universal/PrintDxe/PrintDxe.inf
   INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
+  INF Binaries/nx721j/MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
+  INF Binaries/nx721j/MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+  INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
+  INF FatPkg/EnhancedFatDxe/Fat.inf
+  INF nx721jPkg/Drivers/Nx721jBootMemoryDxe/Nx721jBootMemoryDxe.inf
   INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
 
   INF Binaries/nx721j/QcomPkg/Drivers/PmicGlinkDxe/PmicGlinkDxe.inf

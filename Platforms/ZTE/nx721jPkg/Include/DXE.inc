@@ -42,6 +42,7 @@
   INF Binaries/nx721j/QcomPkg/Drivers/PmicDxe/PmicDxeLa.inf
 
   INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
+  INF nx721jPkg/Drivers/Nx721jBootMemoryDxe/Nx721jBootMemoryDxe.inf
 
   INF Binaries/nx721j/MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   INF Binaries/nx721j/MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf

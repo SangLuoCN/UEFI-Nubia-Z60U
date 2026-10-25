@@ -118,6 +118,7 @@
 [Components]
   # Stage 1 proof driver.  The FDF APRIORI/DXE lists control dispatch order.
   nx721jPkg/Drivers/Nx721jStage1Dxe/Nx721jStage1Dxe.inf
+  nx721jPkg/Drivers/Nx721jBootMemoryDxe/Nx721jBootMemoryDxe.inf
 
   # Official UniXNU firmware integration.  These are public boot-layer
   # components; no Ace5/giulia hardware binaries are used here.
